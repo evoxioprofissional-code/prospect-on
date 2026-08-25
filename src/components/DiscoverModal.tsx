@@ -165,7 +165,7 @@ export default function DiscoverModal({
               <input
                 type="number"
                 min={1}
-                max={50}
+                max={200}
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
                 className="mt-1 w-full h-11 px-3 border border-line rounded outline-none focus:border-ink tnum"

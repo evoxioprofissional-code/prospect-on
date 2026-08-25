@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
   const niche = (body.niche ?? "").trim();
   const city = (body.city ?? "").trim();
-  const limit = Math.min(Math.max(Number(body.limit) || 20, 1), 50);
+  const limit = Math.min(Math.max(Number(body.limit) || 20, 1), 200);
   const source = body.source === "google" ? "google" : "osm";
 
   if (!niche || !city) {
@@ -180,51 +180,81 @@ async function discoverGoogle(niche: string, city: string, limit: number) {
     );
   }
 
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": key,
-      "X-Goog-FieldMask":
-        "places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri",
-    },
-    body: JSON.stringify({
+  // O Text Search (New) devolve 20 por página; para pegar mais é preciso
+  // paginar com pageToken. O Google limita a ~60 resultados por busca (3 pág.).
+  const want = Math.min(limit, 60);
+  const results: DiscoveredLead[] = [];
+  const seen = new Set<string>();
+  let pageToken: string | undefined;
+
+  for (let page = 0; page < 3 && results.length < want; page++) {
+    const reqBody: Record<string, unknown> = {
       textQuery: `${niche} em ${city}`,
-      maxResultCount: Math.min(limit, 20),
+      pageSize: 20,
       languageCode: "pt-BR",
       regionCode: "BR",
-    }),
-  });
+    };
+    if (pageToken) reqBody.pageToken = pageToken;
 
-  const data = (await res.json()) as {
-    error?: { message?: string };
-    places?: Array<{
-      displayName?: { text?: string };
-      formattedAddress?: string;
-      nationalPhoneNumber?: string;
-      websiteUri?: string;
-    }>;
-  };
+    const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask":
+          "nextPageToken,places.displayName,places.formattedAddress,places.nationalPhoneNumber,places.websiteUri",
+      },
+      body: JSON.stringify(reqBody),
+    });
 
-  if (data.error) {
-    throw new Error(data.error.message || "Erro no Google Places");
+    const data = (await res.json()) as {
+      error?: { message?: string };
+      nextPageToken?: string;
+      places?: Array<{
+        displayName?: { text?: string };
+        formattedAddress?: string;
+        nationalPhoneNumber?: string;
+        websiteUri?: string;
+      }>;
+    };
+
+    if (data.error) {
+      if (results.length) break; // já pegou algo nas páginas anteriores
+      throw new Error(data.error.message || "Erro no Google Places");
+    }
+
+    for (const p of data.places ?? []) {
+      const name = p.displayName?.text || "Sem nome";
+      const key2 = name.toLowerCase() + "|" + (p.formattedAddress || "");
+      if (seen.has(key2)) continue;
+      seen.add(key2);
+      const phone = p.nationalPhoneNumber || "";
+      results.push({
+        name,
+        niche,
+        city,
+        phone,
+        whatsapp: phone,
+        instagram: "",
+        website: p.websiteUri || "",
+        has_website: !!p.websiteUri,
+        address: p.formattedAddress || "",
+        source: "google" as const,
+      });
+      if (results.length >= want) break;
+    }
+
+    pageToken = data.nextPageToken;
+    if (!pageToken) break;
+    // O token pode levar um instante para ficar válido: espera curta entre páginas.
+    await new Promise((r) => setTimeout(r, 2000));
   }
 
-  const results: DiscoveredLead[] = (data.places ?? []).map((p) => {
-    const phone = p.nationalPhoneNumber || "";
-    return {
-      name: p.displayName?.text || "Sem nome",
-      niche,
-      city,
-      phone,
-      whatsapp: phone,
-      instagram: "",
-      website: p.websiteUri || "",
-      has_website: !!p.websiteUri,
-      address: p.formattedAddress || "",
-      source: "google" as const,
-    };
+  return NextResponse.json({
+    results,
+    note:
+      results.length >= 60
+        ? "O Google limita a ~60 resultados por busca. Para achar mais, refine por bairro ou busque cidade por cidade."
+        : undefined,
   });
-
-  return NextResponse.json({ results });
 }
