@@ -177,7 +177,7 @@ export default function DisparoPage() {
           <span className="ml-1">preenchem sozinhos.</span>
         </div>
         {aiError && (
-          <p className="text-sm text-brand-700 bg-brand-50 border border-brand/30 rounded-lg px-3 py-2 mt-3">
+          <p className="text-sm text-brand bg-brand/10 border border-brand/30 rounded-lg px-3 py-2 mt-3">
             {aiError}
           </p>
         )}
@@ -245,7 +245,7 @@ export default function DisparoPage() {
                 key={lead.id}
                 className={`border rounded-xl p-4 transition-colors ${
                   isSent
-                    ? "border-green-200 bg-green-50/50"
+                    ? "border-green-500/30 bg-green-500/10"
                     : !lead.has_website
                     ? "border-line border-l-4 border-l-brand bg-paper"
                     : "border-line bg-paper"

@@ -229,7 +229,7 @@ function StatusBadge({ status }: { status: LeadStatus }) {
     proposta: "bg-amber-50 text-amber-700",
     negociando: "bg-purple-50 text-purple-700",
     fechado: "bg-green-50 text-green-700",
-    perdido: "bg-brand-50 text-brand-700",
+    perdido: "bg-brand/10 text-brand",
   };
   return (
     <span className={`inline-block text-xs px-2 py-1 rounded ${tone[status]}`}>{label}</span>
@@ -239,7 +239,7 @@ function StatusBadge({ status }: { status: LeadStatus }) {
 function HeatBadge({ level, label }: { level: "quente" | "morno" | "frio"; label: string }) {
   const tone =
     level === "quente"
-      ? "bg-brand-50 text-brand-700"
+      ? "bg-brand/10 text-brand"
       : level === "morno"
       ? "bg-amber-50 text-amber-700"
       : "bg-soft text-muted";

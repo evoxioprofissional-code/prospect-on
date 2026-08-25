@@ -124,7 +124,7 @@ export default function ConfiguracoesPage() {
               <p
                 className={`text-sm rounded-lg border px-3 py-2 ${
                   senhaMsg.t === "err"
-                    ? "border-brand/30 bg-brand-50 text-brand-700"
+                    ? "border-brand/30 bg-brand/10 text-brand"
                     : "border-green-200 bg-green-50 text-green-700"
                 }`}
               >
@@ -151,7 +151,7 @@ export default function ConfiguracoesPage() {
             </Link>
             <button
               onClick={sair}
-              className="border border-brand/30 text-brand-700 hover:bg-brand-50 font-medium h-11 px-5 rounded-lg transition-colors"
+              className="border border-brand/30 text-brand hover:bg-brand/10 font-medium h-11 px-5 rounded-lg transition-colors"
             >
               Sair da conta
             </button>

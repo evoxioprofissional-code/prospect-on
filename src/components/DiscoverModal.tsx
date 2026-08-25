@@ -181,7 +181,7 @@ export default function DiscoverModal({
           </div>
 
           {error && (
-            <p className="text-sm rounded border border-brand/30 bg-brand-50 text-brand-700 px-3 py-2">
+            <p className="text-sm rounded border border-brand/30 bg-brand/10 text-brand px-3 py-2">
               {error}
             </p>
           )}
@@ -218,7 +218,7 @@ export default function DiscoverModal({
                   <li
                     key={i}
                     className={`flex items-start gap-3 border rounded p-3 ${
-                      selected.has(i) ? "border-brand/40 bg-brand-50/40" : "border-line"
+                      selected.has(i) ? "border-brand/40 bg-brand/5" : "border-line"
                     }`}
                   >
                     <input
@@ -231,7 +231,7 @@ export default function DiscoverModal({
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{r.name}</p>
                         {!r.has_website ? (
-                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand-50 text-brand-700">🔥 sem site</span>
+                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand/10 text-brand">🔥 sem site</span>
                         ) : (
                           <span className="text-[11px] px-1.5 py-0.5 rounded bg-soft text-muted">tem site</span>
                         )}
@@ -284,7 +284,7 @@ function SourceTab({
       type="button"
       onClick={onClick}
       className={`flex-1 rounded border px-4 py-3 text-left transition-colors ${
-        active ? "border-brand bg-brand-50" : "border-line hover:border-ink"
+        active ? "border-brand bg-brand/10" : "border-line hover:border-ink"
       }`}
     >
       <div className="font-medium text-sm">{title}</div>

@@ -140,7 +140,7 @@ function Column({
       <div
         ref={setNodeRef}
         className={`flex-1 min-h-0 overflow-y-auto rounded p-2 space-y-2 transition-colors ${
-          isOver ? "bg-brand-50 ring-1 ring-brand/30" : "bg-soft"
+          isOver ? "bg-brand/10 ring-1 ring-brand/30" : "bg-soft"
         }`}
       >
         {leads.map((l) => (

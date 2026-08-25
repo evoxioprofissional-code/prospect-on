@@ -139,7 +139,7 @@ export default function EquipePage() {
                 <p
                   className={`text-sm rounded border px-3 py-2 mb-6 ${
                     msg.t === "err"
-                      ? "border-brand/30 bg-brand-50 text-brand-700"
+                      ? "border-brand/30 bg-brand/10 text-brand"
                       : "border-green-200 bg-green-50 text-green-700"
                   }`}
                 >

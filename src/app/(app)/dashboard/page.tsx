@@ -264,7 +264,7 @@ function Kpi({
   return (
     <div
       className={`rounded-lg border p-5 ${
-        accent ? "border-brand/30 bg-brand-50" : "border-line bg-paper"
+        accent ? "border-brand/30 bg-brand/10" : "border-line bg-paper"
       }`}
     >
       <p className="eyebrow">{label}</p>

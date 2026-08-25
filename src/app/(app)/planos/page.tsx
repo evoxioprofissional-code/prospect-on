@@ -77,7 +77,7 @@ export default function PlanosPage() {
       )}
 
       {err && (
-        <p className="text-sm text-brand-700 bg-brand-50 border border-brand/30 rounded px-3 py-2 mb-4">
+        <p className="text-sm text-brand bg-brand/10 border border-brand/30 rounded px-3 py-2 mb-4">
           {err}
         </p>
       )}
