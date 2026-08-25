@@ -57,40 +57,44 @@ export default function FunilPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10">
-      <PageHeader
-        eyebrow="Pipeline visual"
-        title="Funil"
-        subtitle="Arraste os cards entre as etapas."
-        action={
-          <button
-            onClick={() => setEditing(null)}
-            className="bg-brand hover:bg-brand-600 text-white font-medium h-11 px-5 rounded"
-          >
-            + Novo lead
-          </button>
-        }
-      />
+    <div className="flex flex-col h-[calc(100dvh-3.5rem)] lg:h-[100dvh] overflow-hidden">
+      {/* Cabeçalho fixo */}
+      <div className="px-6 lg:px-10 pt-6 lg:pt-8 shrink-0">
+        <PageHeader
+          eyebrow="Pipeline visual"
+          title="Funil"
+          subtitle="Arraste os cards entre as etapas. Cada coluna rola sozinha."
+          action={
+            <button
+              onClick={() => setEditing(null)}
+              className="bg-brand hover:bg-brand-600 text-white font-medium h-11 px-5 rounded"
+            >
+              + Novo lead
+            </button>
+          }
+        />
+      </div>
 
       {loading ? (
-        <div className="text-muted">Carregando funil…</div>
+        <div className="px-6 lg:px-10 text-muted">Carregando funil…</div>
       ) : (
         <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
-          <div className="flex gap-4 overflow-x-auto pb-4">
-            {STATUSES.map((s) => (
-              <Column
-                key={s.key}
-                status={s.key}
-                label={s.label}
-                leads={byStatus[s.key]}
-                onOpen={setEditing}
-              />
-            ))}
+          {/* Área do quadro: ocupa o resto da tela, rola só na horizontal */}
+          <div className="flex-1 min-h-0 px-6 lg:px-10 pb-4">
+            <div className="h-full flex gap-4 overflow-x-auto pb-2">
+              {STATUSES.map((s) => (
+                <Column
+                  key={s.key}
+                  status={s.key}
+                  label={s.label}
+                  leads={byStatus[s.key]}
+                  onOpen={setEditing}
+                />
+              ))}
+            </div>
           </div>
 
-          <DragOverlay>
-            {active ? <Card lead={active} dragging /> : null}
-          </DragOverlay>
+          <DragOverlay>{active ? <Card lead={active} dragging /> : null}</DragOverlay>
         </DndContext>
       )}
 
@@ -121,8 +125,9 @@ function Column({
   const total = leads.reduce((s, l) => s + (l.value ?? 0), 0);
 
   return (
-    <div className="w-72 shrink-0">
-      <div className="flex items-center justify-between mb-3 px-1">
+    <div className="w-72 shrink-0 h-full flex flex-col">
+      {/* Cabeçalho da coluna (fixo) */}
+      <div className="flex items-center justify-between mb-2 px-1 shrink-0">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-brand" />
           <span className="font-medium text-sm">{label}</span>
@@ -130,9 +135,11 @@ function Column({
         </div>
         <span className="text-xs text-muted tnum">{brl(total)}</span>
       </div>
+
+      {/* Lista rolável dentro da coluna */}
       <div
         ref={setNodeRef}
-        className={`min-h-[60vh] rounded p-2 space-y-2 transition-colors ${
+        className={`flex-1 min-h-0 overflow-y-auto rounded p-2 space-y-2 transition-colors ${
           isOver ? "bg-brand-50 ring-1 ring-brand/30" : "bg-soft"
         }`}
       >
