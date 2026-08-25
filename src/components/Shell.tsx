@@ -9,6 +9,7 @@ const NAV = [
   { href: "/dashboard", label: "Painel", icon: IconGrid },
   { href: "/leads", label: "Leads", icon: IconList },
   { href: "/funil", label: "Funil", icon: IconColumns },
+  { href: "/disparo", label: "Disparo", icon: IconSend },
 ];
 
 export default function Shell({
@@ -142,6 +143,14 @@ function IconColumns() {
       <rect x="3" y="3" width="5" height="18" rx="1" />
       <rect x="10" y="3" width="5" height="12" rx="1" />
       <rect x="17" y="3" width="4" height="16" rx="1" />
+    </svg>
+  );
+}
+function IconSend() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
     </svg>
   );
 }
