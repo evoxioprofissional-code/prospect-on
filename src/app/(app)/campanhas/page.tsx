@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLeads } from "@/lib/useLeads";
 import { STATUSES, type Lead, type LeadStatus } from "@/lib/types";
 import { DEFAULT_TEMPLATES, resolveTemplate } from "@/lib/templates";
+import { createClient } from "@/lib/supabase/client";
 import {
   CAMPAIGN_STATUS_LABEL,
   DEFAULT_SETTINGS,
@@ -201,21 +202,53 @@ function NewCampaign({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [okMsg, setOkMsg] = useState<string | null>(null);
+  const [niche, setNiche] = useState("");
+  const [skipContacted, setSkipContacted] = useState(true);
+  const [sentLeadIds, setSentLeadIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const emp = localStorage.getItem(LS_EMPRESA);
     if (emp) setEmpresa(emp);
   }, []);
 
+  // Leads que já receberam mensagem em alguma campanha (para não repetir).
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("prospect_campaign_messages")
+      .select("lead_id")
+      .eq("status", "sent")
+      .then(({ data }) => {
+        if (data)
+          setSentLeadIds(
+            new Set(data.map((r) => r.lead_id).filter(Boolean) as string[])
+          );
+      });
+  }, []);
+
   const withWhats = useMemo(() => leads.filter((l) => !!l.whatsapp), [leads]);
+
+  const nichos = useMemo(() => {
+    const s = new Set<string>();
+    withWhats.forEach((l) => {
+      if (l.niche) s.add(l.niche);
+    });
+    return [...s].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }, [withWhats]);
+
   const fila = useMemo(
     () =>
       withWhats.filter((l) => {
-        if (filter === "sem_site") return !l.has_website;
-        if (filter !== "todos") return l.status === filter;
+        if (filter === "sem_site") {
+          if (l.has_website) return false;
+        } else if (filter !== "todos") {
+          if (l.status !== filter) return false;
+        }
+        if (niche && (l.niche || "") !== niche) return false;
+        if (skipContacted && sentLeadIds.has(l.id)) return false;
         return true;
       }),
-    [withWhats, filter]
+    [withWhats, filter, niche, skipContacted, sentLeadIds]
   );
 
   function pickTemplate(id: string) {
@@ -366,6 +399,40 @@ function NewCampaign({
           </Chip>
         ))}
       </div>
+
+      {/* Nicho + não repetir */}
+      <div className="grid sm:grid-cols-2 gap-3 mt-3">
+        <label className="block">
+          <span className="eyebrow">Nicho</span>
+          <select
+            value={niche}
+            onChange={(e) => setNiche(e.target.value)}
+            className="mt-1 w-full h-11 px-3 border border-line rounded-lg bg-paper outline-none focus:border-ink"
+          >
+            <option value="">Todos os nichos</option>
+            {nichos.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-start gap-2 sm:mt-6 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={skipContacted}
+            onChange={(e) => setSkipContacted(e.target.checked)}
+            className="h-4 w-4 mt-0.5 accent-brand"
+          />
+          <span className="text-sm leading-tight">
+            Pular quem já recebeu mensagem
+            <span className="block text-xs text-muted">
+              Não envia de novo pra quem já foi disparado antes.
+            </span>
+          </span>
+        </label>
+      </div>
+
       <p className="text-sm mt-2">
         {leadsLoading ? (
           <span className="text-muted">Carregando leads…</span>
