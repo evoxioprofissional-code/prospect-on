@@ -1,13 +1,14 @@
 // =====================================================================
 // ProspectOn — Worker de disparo automático (via Evolution API)
 //
-// Fica ligado 24/7 (serviço no Railway). NÃO segura a conexão do WhatsApp:
-// quem faz isso é o Evolution API. O worker só lê a fila
-// `prospect_campaign_messages` no Supabase e manda cada mensagem para o
-// Evolution (POST /message/sendText/{instance}), respeitando as regras de
-// cada campanha (intervalo aleatório, janela de horário, limite diário,
-// pausa em lote).
+// MULTI-CONTA. Fica ligado 24/7 (serviço no Railway) e atende TODAS as
+// contas: cada time/dono tem a própria instância no Evolution
+// (prospect_<team_id>) com o próprio número de WhatsApp. O worker descobre
+// as contas com campanha ativa e roda um processador independente para
+// cada uma, em paralelo, respeitando as regras de cada campanha (intervalo
+// aleatório, janela de horário, limite diário, pausa em lote).
 //
+// Ele NÃO segura a conexão do WhatsApp — quem faz isso é o Evolution.
 // Usa a chave SECRETA do Supabase (ignora RLS) e a apikey do Evolution.
 // =====================================================================
 
@@ -18,21 +19,20 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_KEY || "").trim();
 const EVOLUTION_URL = (process.env.EVOLUTION_API_URL || "").replace(/\/$/, "").trim();
 const EVOLUTION_KEY = (process.env.EVOLUTION_API_KEY || "").trim();
-const OWNER = (process.env.WORKER_OWNER_ID || "").trim(); // auth uid do dono do time
+// Opcional: limita o worker a UM time (útil para testar). Vazio = todas as contas.
+const ONLY_TEAM = (process.env.WORKER_OWNER_ID || "").trim();
 const POLL_MS = Number(process.env.POLL_MS || 15000);
+const SCAN_MS = Number(process.env.SCAN_MS || 10000);
 
 const missing = [];
 if (!SUPABASE_URL) missing.push("SUPABASE_URL");
 if (!SERVICE_KEY) missing.push("SUPABASE_SERVICE_KEY");
 if (!EVOLUTION_URL) missing.push("EVOLUTION_API_URL");
 if (!EVOLUTION_KEY) missing.push("EVOLUTION_API_KEY");
-if (!OWNER) missing.push("WORKER_OWNER_ID");
 if (missing.length) {
   console.error("Faltam variáveis de ambiente:", missing.join(", "));
   process.exit(1);
 }
-
-const INSTANCE = `prospect_${OWNER}`;
 
 const supa = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -42,7 +42,10 @@ const log = (...a) => console.log(new Date().toISOString(), "-", ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (min, max) => Math.floor(min + Math.random() * (max - min + 1));
 
+const runners = new Map(); // teamId -> true (processador ativo)
 const batchCount = new Map(); // campaignId -> envios desde a última pausa em lote
+
+const instanceFor = (teamId) => `prospect_${teamId}`;
 
 // ------------------------------------------------------------- evolution
 function evo(path, init) {
@@ -56,17 +59,17 @@ function evo(path, init) {
   });
 }
 
-async function connectionState() {
+async function connectionState(instance) {
   try {
-    const st = await evo(`/instance/connectionState/${INSTANCE}`).then((r) => r.json());
+    const st = await evo(`/instance/connectionState/${instance}`).then((r) => r.json());
     return st.instance?.state ?? st.state ?? "close";
   } catch {
     return "close";
   }
 }
 
-async function sendText(number, text) {
-  const res = await evo(`/message/sendText/${INSTANCE}`, {
+async function sendText(instance, number, text) {
+  const res = await evo(`/message/sendText/${instance}`, {
     method: "POST",
     body: JSON.stringify({ number, text }),
   });
@@ -79,12 +82,12 @@ async function sendText(number, text) {
 }
 
 // ------------------------------------------------------------- sessão db
-async function syncSession(status) {
+async function syncSession(teamId, status) {
   try {
     await supa.from("prospect_wa_sessions").upsert(
       {
-        owner_id: OWNER,
-        instance_name: INSTANCE,
+        owner_id: teamId,
+        instance_name: instanceFor(teamId),
         status,
         last_seen: new Date().toISOString(),
       },
@@ -109,12 +112,22 @@ function normalizeBR(phone) {
   return d;
 }
 
-async function nextJob() {
+async function teamHasRunning(teamId) {
+  const { count } = await supa
+    .from("prospect_campaigns")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "running")
+    .eq("team_id", teamId);
+  return (count || 0) > 0;
+}
+
+// Próxima mensagem elegível de UM time (respeita janela e limite diário).
+async function nextJobForTeam(teamId) {
   const { data: camps, error } = await supa
     .from("prospect_campaigns")
     .select("*")
     .eq("status", "running")
-    .eq("team_id", OWNER)
+    .eq("team_id", teamId)
     .order("created_at", { ascending: true });
   if (error) {
     log("erro lendo campanhas:", error.message);
@@ -154,7 +167,7 @@ async function failMessage(id, reason) {
     .eq("id", id);
 }
 
-async function handle({ campaign, message, today }) {
+async function handle({ campaign, message, today }, instance) {
   const number = normalizeBR(message.phone);
   if (number.length < 10) {
     await failMessage(message.id, "Número inválido");
@@ -166,7 +179,7 @@ async function handle({ campaign, message, today }) {
   }
 
   try {
-    await sendText(number, message.body);
+    await sendText(instance, number, message.body);
 
     await supa
       .from("prospect_campaign_messages")
@@ -207,30 +220,67 @@ async function handle({ campaign, message, today }) {
   }
 }
 
-// ------------------------------------------------------------- loop
-async function loop() {
-  for (;;) {
-    try {
-      const state = await connectionState();
-      await syncSession(state === "open" ? "conectado" : state === "connecting" ? "conectando" : "desconectado");
+// Processa a fila de UM time até acabar (ou o número desconectar de vez).
+async function runTeam(teamId) {
+  const instance = instanceFor(teamId);
+  log(`processando conta ${teamId} (instância ${instance})`);
+  try {
+    for (;;) {
+      const state = await connectionState(instance);
+      await syncSession(
+        teamId,
+        state === "open" ? "conectado" : state === "connecting" ? "conectando" : "desconectado"
+      );
 
       if (state !== "open") {
+        // Número não está conectado: espera enquanto houver campanha ativa.
+        if (!(await teamHasRunning(teamId))) break;
         await sleep(POLL_MS);
         continue;
       }
 
-      const job = await nextJob();
-      if (!job) {
-        await sleep(POLL_MS);
-        continue;
-      }
-      await handle(job);
-    } catch (e) {
-      log("erro no loop:", e.message);
-      await sleep(POLL_MS);
+      const job = await nextJobForTeam(teamId);
+      if (!job) break; // sem trabalho pendente → encerra o processador
+      await handle(job, instance);
+    }
+  } finally {
+    runners.delete(teamId);
+  }
+}
+
+// Descobre contas com campanha ativa e garante um processador para cada.
+async function ensureRunners() {
+  let q = supa.from("prospect_campaigns").select("team_id").eq("status", "running");
+  if (ONLY_TEAM) q = q.eq("team_id", ONLY_TEAM);
+  const { data, error } = await q;
+  if (error) {
+    log("erro no scan de campanhas:", error.message);
+    return;
+  }
+  const teams = [...new Set((data || []).map((r) => r.team_id))];
+  for (const t of teams) {
+    if (!runners.has(t)) {
+      runners.set(t, true);
+      runTeam(t).catch((e) => {
+        log("runner falhou:", t, e.message);
+        runners.delete(t);
+      });
     }
   }
 }
 
-log(`ProspectOn worker iniciando — instância ${INSTANCE}`);
-loop();
+async function main() {
+  log(
+    `ProspectOn worker iniciando (multi-conta${ONLY_TEAM ? `, restrito a ${ONLY_TEAM}` : ""}).`
+  );
+  for (;;) {
+    try {
+      await ensureRunners();
+    } catch (e) {
+      log("erro no loop principal:", e.message);
+    }
+    await sleep(SCAN_MS);
+  }
+}
+
+main();
