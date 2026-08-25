@@ -127,7 +127,7 @@ export default function DisparoPage() {
       />
 
       {/* Configuração da mensagem */}
-      <div className="bg-paper border border-line rounded-xl p-4 sm:p-5 mb-5">
+      <div className="bg-paper border border-line border-l-4 border-l-brand rounded-xl p-4 sm:p-5 mb-5">
         <label className="block mb-4">
           <span className="eyebrow">Sua empresa</span>
           <input
@@ -149,7 +149,7 @@ export default function DisparoPage() {
               onClick={() => pickTemplate(t.id)}
               className={`shrink-0 h-9 px-3 rounded-full text-sm border transition-colors ${
                 templateId === t.id
-                  ? "bg-ink text-white border-ink"
+                  ? "bg-brand text-white border-brand"
                   : "bg-white text-muted border-line hover:border-ink hover:text-ink"
               }`}
             >
@@ -193,7 +193,7 @@ export default function DisparoPage() {
         </div>
         <div className="h-1.5 bg-soft rounded-full overflow-hidden">
           <div
-            className="h-full bg-green-500 rounded-full transition-all"
+            className="h-full bg-brand rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -244,7 +244,11 @@ export default function DisparoPage() {
               <li
                 key={lead.id}
                 className={`border rounded-xl p-4 transition-colors ${
-                  isSent ? "border-green-200 bg-green-50/50" : "border-line bg-paper"
+                  isSent
+                    ? "border-green-200 bg-green-50/50"
+                    : !lead.has_website
+                    ? "border-line border-l-4 border-l-brand bg-paper"
+                    : "border-line bg-paper"
                 }`}
               >
                 <div className="flex items-start gap-3 mb-3">
@@ -316,9 +320,7 @@ function Chip({
       onClick={onClick}
       className={`shrink-0 h-9 px-3 rounded-full text-sm border transition-colors ${
         active
-          ? accent
-            ? "bg-brand text-white border-brand"
-            : "bg-ink text-white border-ink"
+          ? "bg-brand text-white border-brand"
           : "bg-white text-muted border-line hover:border-ink hover:text-ink"
       }`}
     >

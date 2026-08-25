@@ -140,7 +140,11 @@ function LeadCard({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
   return (
     <div
       onClick={onOpen}
-      className="group flex flex-col border border-line rounded-lg bg-paper p-4 cursor-pointer transition hover:border-ink/25 hover:shadow-card"
+      className={`group flex flex-col border rounded-lg bg-paper p-4 cursor-pointer transition hover:shadow-card ${
+        !lead.has_website
+          ? "border-line border-l-4 border-l-brand hover:border-l-brand"
+          : "border-line hover:border-ink/25"
+      }`}
     >
       {/* Cabeçalho */}
       <div className="flex items-start gap-3">
@@ -208,9 +212,7 @@ function Chip({
       onClick={onClick}
       className={`h-9 px-3 rounded-full text-sm border transition-colors ${
         active
-          ? accent
-            ? "bg-brand text-white border-brand"
-            : "bg-ink text-white border-ink"
+          ? "bg-brand text-white border-brand"
           : "bg-white text-muted border-line hover:border-ink hover:text-ink"
       }`}
     >
