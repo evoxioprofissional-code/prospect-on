@@ -13,6 +13,7 @@
 // =====================================================================
 
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 
 // ---------------------------------------------------------------- config
 const SUPABASE_URL = (process.env.SUPABASE_URL || "").trim();
@@ -36,6 +37,8 @@ if (missing.length) {
 
 const supa = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
+  // Node < 22 não tem WebSocket nativo; o supabase-js exige um. Passamos o "ws".
+  realtime: { transport: ws },
 });
 
 const log = (...a) => console.log(new Date().toISOString(), "-", ...a);

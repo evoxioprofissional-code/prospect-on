@@ -5,12 +5,13 @@
   "type": "module",
   "description": "Worker de disparo automático do ProspectOn (fila Supabase -> Evolution API).",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "ws": "^8.18.0"
   }
 }
