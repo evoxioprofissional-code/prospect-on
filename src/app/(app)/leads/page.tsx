@@ -42,7 +42,7 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-6xl mx-auto">
+    <div className="p-6 lg:p-10 max-w-7xl mx-auto">
       <PageHeader
         eyebrow="Base de prospecção"
         title="Leads"
@@ -65,20 +65,19 @@ export default function LeadsPage() {
         }
       />
 
-      {/* Barra de busca e filtros */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">⌕</span>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nome, nicho, cidade, telefone…"
-            className="w-full h-11 pl-9 pr-3 border border-line rounded bg-white outline-none focus:border-ink"
-          />
-        </div>
+      {/* Busca */}
+      <div className="relative mb-4">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">⌕</span>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar por nome, nicho, cidade, telefone…"
+          className="w-full h-11 pl-9 pr-3 border border-line rounded bg-white outline-none focus:border-ink"
+        />
       </div>
 
-      <div className="flex gap-2 flex-wrap mb-5">
+      {/* Filtros */}
+      <div className="flex gap-2 flex-wrap mb-6">
         <Chip active={filter === "todos"} onClick={() => setFilter("todos")}>
           Todos
         </Chip>
@@ -93,79 +92,26 @@ export default function LeadsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 rounded border border-line bg-soft animate-pulse" />
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="h-40 rounded-lg border border-line bg-soft animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="border border-dashed border-line rounded p-10 text-center text-muted">
+        <div className="border border-dashed border-line rounded-lg p-12 text-center text-muted">
           Nenhum lead encontrado com esse filtro.
         </div>
       ) : (
-        <div className="border border-line rounded overflow-hidden bg-paper">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line bg-soft/60">
-                <Th>Negócio</Th>
-                <Th className="hidden md:table-cell">Contato</Th>
-                <Th className="hidden lg:table-cell">Situação</Th>
-                <Th>Etapa</Th>
-                <Th className="text-right">Valor</Th>
-                <Th className="w-10"></Th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((l) => {
-                const heat = leadHeat(l);
-                return (
-                  <tr
-                    key={l.id}
-                    onClick={() => setEditing(l)}
-                    className="border-b border-line last:border-0 hover:bg-soft/50 cursor-pointer"
-                  >
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className="h-8 w-8 shrink-0 rounded bg-ink text-white grid place-items-center text-xs font-bold">
-                          {initials(l.name)}
-                        </span>
-                        <div>
-                          <p className="font-medium">{l.name}</p>
-                          <p className="text-xs text-muted">
-                            {[l.niche, l.city].filter(Boolean).join(" · ") || "—"}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell text-muted">
-                      {l.whatsapp || l.phone || l.email || "—"}
-                    </td>
-                    <td className="px-4 py-3 hidden lg:table-cell">
-                      <HeatBadge level={heat.level} label={heat.label} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={l.status} />
-                    </td>
-                    <td className="px-4 py-3 text-right tnum">{brl(l.value)}</td>
-                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
-                      {l.whatsapp && (
-                        <a
-                          href={whatsappLink(l.whatsapp, `Olá! Falo com o ${l.name}?`)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="WhatsApp"
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          ✆
-                        </a>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          <p className="text-sm text-muted mb-3 tnum">
+            {filtered.length} resultado(s)
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((l) => (
+              <LeadCard key={l.id} lead={l} onOpen={() => setEditing(l)} />
+            ))}
+          </div>
+        </>
       )}
 
       {editing !== undefined && (
@@ -183,6 +129,64 @@ export default function LeadsPage() {
           onClose={() => setDiscover(false)}
           onImport={createMany}
         />
+      )}
+    </div>
+  );
+}
+
+function LeadCard({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
+  const heat = leadHeat(lead);
+  const contact = lead.whatsapp || lead.phone || lead.email;
+  return (
+    <div
+      onClick={onOpen}
+      className="group flex flex-col border border-line rounded-lg bg-paper p-4 cursor-pointer transition hover:border-ink/25 hover:shadow-card"
+    >
+      {/* Cabeçalho */}
+      <div className="flex items-start gap-3">
+        <span className="h-9 w-9 shrink-0 rounded bg-ink text-white grid place-items-center text-xs font-bold">
+          {initials(lead.name)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold leading-tight truncate" title={lead.name}>
+            {lead.name}
+          </p>
+          <p className="text-xs text-muted truncate">
+            {[lead.niche, lead.city].filter(Boolean).join(" · ") || "—"}
+          </p>
+        </div>
+        <HeatBadge level={heat.level} label={heat.label} />
+      </div>
+
+      {/* Contato */}
+      <div className="mt-3 text-sm text-muted truncate">
+        {contact ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="text-ink/40">✆</span>
+            {contact}
+          </span>
+        ) : (
+          <span className="text-ink/30">sem contato</span>
+        )}
+      </div>
+
+      {/* Rodapé */}
+      <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-2">
+        <StatusBadge status={lead.status} />
+        <span className="tnum font-medium text-sm">{brl(lead.value)}</span>
+      </div>
+
+      {/* Ação rápida */}
+      {lead.whatsapp && (
+        <a
+          href={whatsappLink(lead.whatsapp, `Olá! Falo com o ${lead.name}?`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-3 inline-flex items-center justify-center gap-2 h-9 rounded border border-green-200 bg-green-50 text-green-700 text-sm hover:bg-green-100 transition-colors"
+        >
+          <IconWhats /> WhatsApp
+        </a>
       )}
     </div>
   );
@@ -215,12 +219,6 @@ function Chip({
   );
 }
 
-function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
-  return (
-    <th className={`text-left px-4 py-3 eyebrow font-semibold ${className}`}>{children}</th>
-  );
-}
-
 function StatusBadge({ status }: { status: LeadStatus }) {
   const label = STATUSES.find((s) => s.key === status)?.label ?? status;
   const tone: Record<LeadStatus, string> = {
@@ -245,8 +243,16 @@ function HeatBadge({ level, label }: { level: "quente" | "morno" | "frio"; label
       : "bg-soft text-muted";
   const dot = level === "quente" ? "🔥" : level === "morno" ? "•" : "";
   return (
-    <span className={`inline-block text-xs px-2 py-1 rounded ${tone}`}>
+    <span className={`shrink-0 inline-block text-[11px] px-2 py-1 rounded ${tone}`}>
       {dot} {label}
     </span>
+  );
+}
+
+function IconWhats() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-1-.3-1.6-.6-2.9-1.3-4.8-4.2-4.9-4.4-.1-.2-1.2-1.5-1.2-2.9s.7-2 1-2.3c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.1.1.3 0 .5-.3.6-.6.8-.8 1-.2.2-.3.3-.1.6.2.3.9 1.4 1.9 2.3 1.3 1.1 2.3 1.4 2.6 1.6.3.1.4.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.2.1 1.5.7 1.7.9.2.1.4.2.4.3.1.1.1.6-.1 1.1Z" />
+    </svg>
   );
 }
