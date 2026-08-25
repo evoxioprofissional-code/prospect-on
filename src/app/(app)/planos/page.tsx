@@ -7,17 +7,17 @@ import PageHeader from "@/components/PageHeader";
 
 export default function PlanosPage() {
   const { sub, loading } = useSubscription();
-  const [busy, setBusy] = useState<PlanId | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function assinar(plan: PlanId) {
+  async function assinar(plan: PlanId, method: "card" | "pix") {
     setErr(null);
-    setBusy(plan);
+    setBusy(`${plan}:${method}`);
     try {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, method }),
       });
       const data = await res.json();
       if (!res.ok || !data.init_point) {
@@ -89,15 +89,16 @@ export default function PlanosPage() {
             key={id}
             id={id}
             current={current}
-            busy={busy === id}
-            onAssinar={() => assinar(id)}
+            busy={busy}
+            onAssinar={assinar}
           />
         ))}
       </div>
 
       <p className="text-xs text-muted mt-6">
-        Pagamento processado pelo Mercado Pago (Pix e cartão). A assinatura é
-        mensal e você pode cancelar quando quiser.
+        <b>Cartão</b> = assinatura recorrente (cobra sozinho todo mês). <b>Pix</b>{" "}
+        = pagamento avulso que libera 30 dias (você renova quando vencer).
+        Processado pelo Mercado Pago.
       </p>
     </div>
   );
@@ -111,11 +112,12 @@ function PlanCard({
 }: {
   id: PlanId;
   current: PlanId;
-  busy: boolean;
-  onAssinar: () => void;
+  busy: string | null;
+  onAssinar: (plan: PlanId, method: "card" | "pix") => void;
 }) {
   const p = PLANS[id];
   const isCurrent = id === current;
+  const paid = p.price > 0;
   return (
     <div
       className={`rounded-lg border p-5 flex flex-col ${
@@ -144,25 +146,36 @@ function PlanCard({
         ))}
       </ul>
 
-      <button
-        disabled={isCurrent || p.price === 0 || busy}
-        onClick={onAssinar}
-        className={`mt-5 h-11 rounded font-medium text-sm transition-colors ${
-          isCurrent || p.price === 0
-            ? "bg-soft text-muted cursor-default"
-            : p.highlight
-            ? "bg-brand hover:bg-brand-600 text-white disabled:opacity-60"
-            : "border border-ink text-ink hover:bg-ink hover:text-white disabled:opacity-60"
-        }`}
-      >
-        {isCurrent
-          ? "Plano atual"
-          : p.price === 0
-          ? "—"
-          : busy
-          ? "Abrindo…"
-          : "Assinar"}
-      </button>
+      {isCurrent ? (
+        <div className="mt-5 h-11 rounded bg-soft text-muted text-sm grid place-items-center">
+          Plano atual
+        </div>
+      ) : !paid ? (
+        <div className="mt-5 h-11 rounded bg-soft text-muted text-sm grid place-items-center">
+          —
+        </div>
+      ) : (
+        <div className="mt-5 space-y-2">
+          <button
+            onClick={() => onAssinar(id, "card")}
+            disabled={!!busy}
+            className={`w-full h-11 rounded font-medium text-sm transition-colors disabled:opacity-60 ${
+              p.highlight
+                ? "bg-brand hover:bg-brand-600 text-white"
+                : "border border-ink text-ink hover:bg-ink hover:text-white"
+            }`}
+          >
+            {busy === `${id}:card` ? "Abrindo…" : "Assinar com cartão"}
+          </button>
+          <button
+            onClick={() => onAssinar(id, "pix")}
+            disabled={!!busy}
+            className="w-full h-11 rounded font-medium text-sm border border-line text-ink hover:border-ink transition-colors disabled:opacity-60"
+          >
+            {busy === `${id}:pix` ? "Abrindo…" : "Pagar com Pix (30 dias)"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PLANS, isPlanId } from "@/lib/plans";
-import { createPreapproval, hasMercadoPago } from "@/lib/mercadopago";
+import {
+  createPreapproval,
+  createPixPreference,
+  hasMercadoPago,
+} from "@/lib/mercadopago";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +18,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { plan?: string };
+  let body: { plan?: string; method?: string };
   try {
     body = await req.json();
   } catch {
@@ -22,6 +26,7 @@ export async function POST(req: Request) {
   }
 
   const plan = body.plan ?? "";
+  const method = body.method === "pix" ? "pix" : "card";
   if (!isPlanId(plan) || plan === "trial") {
     return NextResponse.json({ error: "Plano inválido." }, { status: 400 });
   }
@@ -40,6 +45,18 @@ export async function POST(req: Request) {
     "https://www.prospecton.com.br";
 
   try {
+    if (method === "pix") {
+      const { init_point } = await createPixPreference({
+        planName: PLANS[plan].name,
+        amount: PLANS[plan].price,
+        payerEmail: user.email,
+        externalReference: `${user.id}:${plan}`,
+        backUrl: `${origin}/planos`,
+        notifyUrl: `${origin}/api/webhooks/mercadopago`,
+      });
+      return NextResponse.json({ init_point });
+    }
+
     const { init_point } = await createPreapproval({
       planName: PLANS[plan].name,
       amount: PLANS[plan].price,

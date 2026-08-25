@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPreapproval } from "@/lib/mercadopago";
+import { getPreapproval, getPayment } from "@/lib/mercadopago";
 import { createAdminClient, hasAdmin } from "@/lib/supabase/admin";
 import { isPlanId } from "@/lib/plans";
 
@@ -21,8 +21,10 @@ export async function POST(req: Request) {
     // notificação pode vir sem corpo JSON
   }
 
-  // Só tratamos eventos de assinatura (preapproval)
-  if (!/preapproval/i.test(type) || !id) {
+  const isPreapproval = /preapproval/i.test(type);
+  const isPayment = !isPreapproval && /payment/i.test(type);
+
+  if ((!isPreapproval && !isPayment) || !id) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
@@ -35,35 +37,59 @@ export async function POST(req: Request) {
   }
 
   try {
-    const pre = await getPreapproval(id);
-    const [userId, plan] = (pre.external_reference || "").split(":");
+    const admin = createAdminClient();
+
+    // ---- Assinatura recorrente (cartão) ----
+    if (isPreapproval) {
+      const pre = await getPreapproval(id);
+      const [userId, plan] = (pre.external_reference || "").split(":");
+      if (!userId || !isPlanId(plan)) {
+        return NextResponse.json({ ok: true, ignored: "ref inválida" });
+      }
+      if (pre.status === "authorized") {
+        const end = new Date();
+        end.setMonth(end.getMonth() + 1);
+        await admin.from("subscriptions").upsert(
+          {
+            user_id: userId,
+            plan,
+            status: "active",
+            current_period_end: end.toISOString().slice(0, 10),
+            provider: "mercadopago",
+            provider_subscription_id: id,
+          },
+          { onConflict: "user_id" }
+        );
+      } else if (pre.status === "cancelled" || pre.status === "paused") {
+        await admin
+          .from("subscriptions")
+          .update({ status: "canceled" })
+          .eq("user_id", userId);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // ---- Pagamento avulso (Pix) — libera 30 dias ----
+    const pay = await getPayment(id);
+    const [userId, plan] = (pay.external_reference || "").split(":");
     if (!userId || !isPlanId(plan)) {
       return NextResponse.json({ ok: true, ignored: "ref inválida" });
     }
-
-    const admin = createAdminClient();
-
-    if (pre.status === "authorized") {
+    if (pay.status === "approved") {
       const end = new Date();
-      end.setMonth(end.getMonth() + 1);
+      end.setDate(end.getDate() + 30);
       await admin.from("subscriptions").upsert(
         {
           user_id: userId,
           plan,
           status: "active",
           current_period_end: end.toISOString().slice(0, 10),
-          provider: "mercadopago",
+          provider: "mercadopago_pix",
           provider_subscription_id: id,
         },
         { onConflict: "user_id" }
       );
-    } else if (pre.status === "cancelled" || pre.status === "paused") {
-      await admin
-        .from("subscriptions")
-        .update({ status: "canceled" })
-        .eq("user_id", userId);
     }
-
     return NextResponse.json({ ok: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "erro";

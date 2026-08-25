@@ -52,7 +52,16 @@ export async function getSubState(userId: string): Promise<SubState> {
     data = upd.data ?? data;
   }
 
-  const plan: PlanId = data && isPlanId(data.plan) ? data.plan : "trial";
+  let plan: PlanId = data && isPlanId(data.plan) ? data.plan : "trial";
+
+  // Pix é avulso: se passou a validade de 30 dias, cai pro Trial.
+  const todayISO = new Date().toISOString().slice(0, 10);
+  const expiredPix =
+    data?.provider === "mercadopago_pix" &&
+    data?.current_period_end &&
+    data.current_period_end < todayISO;
+  if (expiredPix || data?.status === "canceled") plan = "trial";
+
   const p = PLANS[plan];
   return {
     plan,
