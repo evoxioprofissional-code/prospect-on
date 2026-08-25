@@ -13,19 +13,19 @@ export const DEFAULT_TEMPLATES: Template[] = [
     id: "direto",
     name: "Direto e curto",
     body:
-      "Olá! Aqui é da [SUA EMPRESA]. Falo com o responsável pela {nome}? {gancho} Posso te mandar uns exemplos?",
+      "Olá! Aqui é da {empresa}. Falo com o responsável pela {nome}? {gancho} Posso te mandar uns exemplos?",
   },
   {
     id: "consultivo",
     name: "Consultivo",
     body:
-      "Oi! Tudo bem? Estava pesquisando {nicho} em {cidade} e encontrei a {nome}. {gancho} Faz sentido a gente conversar 5 minutos sobre isso?",
+      "Oi! Tudo bem? Aqui é da {empresa}. Estava pesquisando {nicho} em {cidade} e encontrei a {nome}. {gancho} Faz sentido a gente conversar 5 minutos sobre isso?",
   },
   {
     id: "prova-social",
     name: "Prova social",
     body:
-      "Olá! Ajudo negócios de {nicho} a atrair mais clientes pela internet. Vi a {nome} e {gancho} Quer ver um site que fiz pra um cliente parecido?",
+      "Olá! Aqui é da {empresa}, ajudo negócios de {nicho} a atrair mais clientes pela internet. Vi a {nome} e {gancho} Quer ver um site que fiz pra um cliente parecido?",
   },
 ];
 
@@ -37,8 +37,13 @@ export function ganchoFor(lead: Pick<Lead, "has_website" | "website">): string {
   return "queria mostrar como um site mais forte pode trazer mais clientes pra vocês.";
 }
 
-export function resolveTemplate(body: string, lead: Lead): string {
+export function resolveTemplate(
+  body: string,
+  lead: Lead,
+  empresa?: string
+): string {
   return body
+    .split("{empresa}").join(empresa?.trim() || "nossa empresa")
     .split("{nome}").join(lead.name)
     .split("{cidade}").join(lead.city || "sua cidade")
     .split("{nicho}").join(lead.niche || "seu segmento")

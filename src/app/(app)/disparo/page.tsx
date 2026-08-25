@@ -9,6 +9,7 @@ import { DEFAULT_TEMPLATES, resolveTemplate } from "@/lib/templates";
 import PageHeader from "@/components/PageHeader";
 
 const LS_KEY = "prospect_template_v1";
+const LS_EMPRESA = "prospect_empresa_v1";
 
 type Filter = "todos" | "sem_site" | LeadStatus;
 
@@ -17,6 +18,7 @@ export default function DisparoPage() {
   const supabase = createClient();
 
   const [filter, setFilter] = useState<Filter>("novo");
+  const [empresa, setEmpresa] = useState("");
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATES[0].id);
   const [body, setBody] = useState(DEFAULT_TEMPLATES[0].body);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
@@ -24,7 +26,7 @@ export default function DisparoPage() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [sent, setSent] = useState<Set<string>>(new Set());
 
-  // Carrega template salvo
+  // Carrega template + nome da empresa salvos
   useEffect(() => {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) {
@@ -34,6 +36,8 @@ export default function DisparoPage() {
         if (id) setTemplateId(id);
       } catch {}
     }
+    const emp = localStorage.getItem(LS_EMPRESA);
+    if (emp) setEmpresa(emp);
   }, []);
 
   function persist(id: string, b: string) {
@@ -67,7 +71,7 @@ export default function DisparoPage() {
   const enviados = fila.filter((l) => sent.has(l.id)).length;
 
   function messageFor(lead: Lead): string {
-    return overrides[lead.id] ?? resolveTemplate(body, lead);
+    return overrides[lead.id] ?? resolveTemplate(body, lead, empresa);
   }
 
   async function gerarIA(lead: Lead) {
@@ -127,6 +131,23 @@ export default function DisparoPage() {
 
       {/* Editor de template */}
       <div className="bg-paper border border-line rounded-lg p-5 mb-6">
+        {/* Nome da empresa (preenche {empresa} em todos os modelos) */}
+        <label className="block mb-4">
+          <span className="eyebrow">Sua empresa</span>
+          <input
+            value={empresa}
+            onChange={(e) => {
+              setEmpresa(e.target.value);
+              localStorage.setItem(LS_EMPRESA, e.target.value);
+            }}
+            placeholder="Ex.: Studio X Sites"
+            className="mt-1 w-full h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink"
+          />
+          <span className="text-xs text-muted mt-1 block">
+            Preenchido uma vez — entra automático em todas as mensagens.
+          </span>
+        </label>
+
         <div className="flex flex-wrap gap-2 mb-4">
           {DEFAULT_TEMPLATES.map((t) => (
             <button
@@ -157,7 +178,7 @@ export default function DisparoPage() {
         </label>
         <p className="text-xs text-muted mt-2">
           Variáveis:{" "}
-          {["{nome}", "{cidade}", "{nicho}", "{gancho}"].map((v) => (
+          {["{empresa}", "{nome}", "{cidade}", "{nicho}", "{gancho}"].map((v) => (
             <code key={v} className="bg-soft px-1.5 py-0.5 rounded mr-1">
               {v}
             </code>
