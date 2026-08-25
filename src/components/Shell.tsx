@@ -10,6 +10,7 @@ const NAV = [
   { href: "/leads", label: "Leads", icon: IconList },
   { href: "/funil", label: "Funil", icon: IconColumns },
   { href: "/disparo", label: "Disparo", icon: IconSend },
+  { href: "/planos", label: "Planos", icon: IconStar },
 ];
 
 export default function Shell({
@@ -151,6 +152,13 @@ function IconSend() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
       <line x1="22" y1="2" x2="11" y2="13" />
       <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+  );
+}
+function IconStar() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <polygon points="12 2 15 8.5 22 9.3 17 14 18.5 21 12 17.5 5.5 21 7 14 2 9.3 9 8.5 12 2" />
     </svg>
   );
 }

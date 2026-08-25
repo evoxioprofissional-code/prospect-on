@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { nicheToOverpass, nameStemPattern } from "@/lib/niche";
+import { createClient } from "@/lib/supabase/server";
+import { getSubState, consumeSearch } from "@/lib/subscription-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,7 +41,30 @@ export async function POST(req: Request) {
 
   try {
     if (source === "google") {
-      return await discoverGoogle(niche, city, limit);
+      // Cota: só o Google conta (OSM é ilimitado).
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        return NextResponse.json({ error: "Sessão expirada." }, { status: 401 });
+      }
+      const sub = await getSubState(user.id);
+      if (sub.enforced && sub.used >= sub.quota) {
+        return NextResponse.json(
+          {
+            error: `Você atingiu o limite de ${sub.quota} buscas do plano ${sub.plan} neste mês. Faça upgrade para continuar.`,
+            code: "quota",
+            plan: sub.plan,
+            used: sub.used,
+            quota: sub.quota,
+          },
+          { status: 402 }
+        );
+      }
+      const res = await discoverGoogle(niche, city, limit);
+      if (res.ok) await consumeSearch(user.id);
+      return res;
     }
     return await discoverOSM(niche, city, limit);
   } catch (e) {

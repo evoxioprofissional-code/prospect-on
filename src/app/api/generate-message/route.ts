@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@/lib/supabase/server";
+import { getSubState } from "@/lib/subscription-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +38,26 @@ export async function POST(req: Request) {
   const { name, niche, city, has_website, tone } = body;
   if (!name) {
     return NextResponse.json({ error: "Nome do lead é obrigatório." }, { status: 400 });
+  }
+
+  // IA só está disponível nos planos que incluem esse recurso.
+  const supabase = createClient();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser) {
+    return NextResponse.json({ error: "Sessão expirada." }, { status: 401 });
+  }
+  const sub = await getSubState(authUser.id);
+  if (sub.enforced && !sub.ai) {
+    return NextResponse.json(
+      {
+        error: "A geração com IA está disponível no plano Pro. Faça upgrade para usar.",
+        code: "plan",
+        plan: sub.plan,
+      },
+      { status: 402 }
+    );
   }
 
   const client = new Anthropic({ apiKey: key });
