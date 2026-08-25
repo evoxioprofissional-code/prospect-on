@@ -102,6 +102,27 @@ async function syncSession(teamId, status) {
 }
 
 // ------------------------------------------------------------- fila
+// Hora e data no fuso do Brasil (o Railway roda em UTC; a janela de horário
+// e o "limite por dia" precisam seguir o horário local, não o do servidor).
+const TZ = process.env.WORKER_TZ || "America/Sao_Paulo";
+function brNow() {
+  const d = new Date();
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      timeZone: TZ,
+      hour: "2-digit",
+      hourCycle: "h23",
+    }).format(d)
+  );
+  const date = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d); // YYYY-MM-DD
+  return { hour, date };
+}
+
 function withinWindow(hour, start, end) {
   if (start === end) return true;
   if (start < end) return hour >= start && hour < end;
@@ -137,9 +158,7 @@ async function nextJobForTeam(teamId) {
     return null;
   }
 
-  const now = new Date();
-  const hour = now.getHours();
-  const today = now.toISOString().slice(0, 10);
+  const { hour, date: today } = brNow();
 
   for (const c of camps || []) {
     if (!withinWindow(hour, c.window_start_hour, c.window_end_hour)) continue;
