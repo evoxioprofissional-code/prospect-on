@@ -170,6 +170,28 @@ async function failMessage(id, reason) {
     .eq("id", id);
 }
 
+// Igual ao disparo manual: sobe o lead de "novo" para "contatado" (sem mexer
+// em estágios mais avançados) e registra a interação, para o funil andar.
+async function markLeadContacted(message) {
+  if (!message.lead_id) return;
+  try {
+    await supa
+      .from("leads")
+      .update({ status: "contatado" })
+      .eq("id", message.lead_id)
+      .eq("status", "novo");
+    await supa.from("interactions").insert({
+      lead_id: message.lead_id,
+      user_id: message.user_id,
+      team_id: message.team_id,
+      type: "whatsapp",
+      content: message.body,
+    });
+  } catch (e) {
+    log("erro ao atualizar lead:", e.message);
+  }
+}
+
 async function handle({ campaign, message, today }, instance) {
   const number = normalizeBR(message.phone);
   if (number.length < 10) {
@@ -199,6 +221,7 @@ async function handle({ campaign, message, today }, instance) {
       })
       .eq("id", campaign.id);
 
+    await markLeadContacted(message);
     log(`enviado → ${message.phone}  [${campaign.name}]`);
 
     // Pausa em lote a cada N envios.
