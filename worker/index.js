@@ -51,15 +51,22 @@ const batchCount = new Map(); // campaignId -> envios desde a última pausa em l
 const instanceFor = (teamId) => `prospect_${teamId}`;
 
 // ------------------------------------------------------------- evolution
+const EVO_TIMEOUT_MS = Number(process.env.EVO_TIMEOUT_MS || 30000);
+
+// fetch com timeout: se o Evolution/WhatsApp travar numa chamada, aborta em vez
+// de deixar o worker pendurado pra sempre (isso paralisava a campanha inteira).
 function evo(path, init) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), EVO_TIMEOUT_MS);
   return fetch(`${EVOLUTION_URL}${path}`, {
     ...init,
+    signal: ctrl.signal,
     headers: {
       apikey: EVOLUTION_KEY,
       "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
-  });
+  }).finally(() => clearTimeout(t));
 }
 
 async function connectionState(instance) {
