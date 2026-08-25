@@ -1,11 +1,36 @@
 "use client";
 
+import { useState } from "react";
 import { useSubscription } from "@/lib/useSubscription";
 import { PLANS, PLAN_ORDER, type PlanId } from "@/lib/plans";
 import PageHeader from "@/components/PageHeader";
 
 export default function PlanosPage() {
   const { sub, loading } = useSubscription();
+  const [busy, setBusy] = useState<PlanId | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function assinar(plan: PlanId) {
+    setErr(null);
+    setBusy(plan);
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.init_point) {
+        setErr(data.error || "Não foi possível iniciar a assinatura.");
+        setBusy(null);
+        return;
+      }
+      window.location.href = data.init_point; // redireciona pro checkout do MP
+    } catch {
+      setErr("Erro de conexão.");
+      setBusy(null);
+    }
+  }
   const current = sub?.plan ?? "trial";
   const used = sub?.used ?? 0;
   const quota = sub?.quota ?? PLANS.trial.searchQuota;
@@ -51,22 +76,44 @@ export default function PlanosPage() {
         </div>
       )}
 
+      {err && (
+        <p className="text-sm text-brand-700 bg-brand-50 border border-brand/30 rounded px-3 py-2 mb-4">
+          {err}
+        </p>
+      )}
+
       {/* Grade de planos */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {PLAN_ORDER.map((id) => (
-          <PlanCard key={id} id={id} current={current} />
+          <PlanCard
+            key={id}
+            id={id}
+            current={current}
+            busy={busy === id}
+            onAssinar={() => assinar(id)}
+          />
         ))}
       </div>
 
       <p className="text-xs text-muted mt-6">
-        Pagamento via AbacatePay (Pix e cartão) chega em breve. Por enquanto, o
-        upgrade é manual — fale com o suporte.
+        Pagamento processado pelo Mercado Pago (Pix e cartão). A assinatura é
+        mensal e você pode cancelar quando quiser.
       </p>
     </div>
   );
 }
 
-function PlanCard({ id, current }: { id: PlanId; current: PlanId }) {
+function PlanCard({
+  id,
+  current,
+  busy,
+  onAssinar,
+}: {
+  id: PlanId;
+  current: PlanId;
+  busy: boolean;
+  onAssinar: () => void;
+}) {
   const p = PLANS[id];
   const isCurrent = id === current;
   return (
@@ -98,21 +145,23 @@ function PlanCard({ id, current }: { id: PlanId; current: PlanId }) {
       </ul>
 
       <button
-        disabled={isCurrent}
-        onClick={() =>
-          alert(
-            "Pagamento via AbacatePay chega na próxima etapa. Por enquanto o upgrade é manual."
-          )
-        }
+        disabled={isCurrent || p.price === 0 || busy}
+        onClick={onAssinar}
         className={`mt-5 h-11 rounded font-medium text-sm transition-colors ${
-          isCurrent
+          isCurrent || p.price === 0
             ? "bg-soft text-muted cursor-default"
             : p.highlight
-            ? "bg-brand hover:bg-brand-600 text-white"
-            : "border border-ink text-ink hover:bg-ink hover:text-white"
+            ? "bg-brand hover:bg-brand-600 text-white disabled:opacity-60"
+            : "border border-ink text-ink hover:bg-ink hover:text-white disabled:opacity-60"
         }`}
       >
-        {isCurrent ? "Plano atual" : p.price === 0 ? "—" : "Assinar"}
+        {isCurrent
+          ? "Plano atual"
+          : p.price === 0
+          ? "—"
+          : busy
+          ? "Abrindo…"
+          : "Assinar"}
       </button>
     </div>
   );
