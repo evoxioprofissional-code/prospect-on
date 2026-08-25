@@ -6,35 +6,37 @@ export interface Template {
   body: string;
 }
 
-// Modelos padrão. Variáveis: {nome} {cidade} {nicho} {gancho}
+// Modelos de 1ª abordagem por WhatsApp. Tom humano, curto e específico —
+// nada de "vendo sites, quer comprar?". O ângulo que converte é o do Google:
+// "procurei vocês e não achei" (o lead sente que perde cliente pro concorrente).
+// Variáveis: {empresa} {nome}(negócio) {cidade} {nicho} {gancho}
 // {gancho} se ajusta sozinho conforme o lead ter site ou não.
 export const DEFAULT_TEMPLATES: Template[] = [
   {
-    id: "direto",
-    name: "Direto e curto",
+    id: "google",
+    name: "Não aparece no Google",
     body:
-      "Olá! Aqui é da {empresa}. Falo com o responsável pela {nome}? {gancho} Posso te mandar uns exemplos?",
+      "Oi, tudo bem? Vi a {nome} aqui em {cidade} e fui procurar vocês no Google — {gancho}. Hoje o cliente pesquisa antes de decidir, e quem não aparece acaba indo pro concorrente. Trabalho com isso; posso te mandar um exemplo rápido do que dá pra fazer?",
   },
   {
-    id: "consultivo",
-    name: "Consultivo",
+    id: "pessoal",
+    name: "Pessoal e leve",
     body:
-      "Oi! Tudo bem? Aqui é da {empresa}. Estava pesquisando {nicho} em {cidade} e encontrei a {nome}. {gancho} Faz sentido a gente conversar 5 minutos sobre isso?",
+      "Opa! Aqui é da {empresa}. Passei pela {nome} e curti o trabalho de vocês 👏 Cês têm site próprio ou tá só no Instagram? Pergunto porque {gancho} e queria te mostrar uma ideia rápida, sem compromisso nenhum.",
   },
   {
-    id: "prova-social",
-    name: "Prova social",
+    id: "concorrente",
+    name: "Direto ao ponto",
     body:
-      "Olá! Aqui é da {empresa}, ajudo negócios de {nicho} a atrair mais clientes pela internet. Vi a {nome} e {gancho} Quer ver um site que fiz pra um cliente parecido?",
+      "Oi! Quando alguém busca “{nicho} em {cidade}” no Google, quem aparece leva o cliente. Olhei a {nome} e {gancho} — dá pra resolver rápido com um site simples e bonito. Quer que eu te mostre como ficaria?",
   },
 ];
 
 export function ganchoFor(lead: Pick<Lead, "has_website" | "website">): string {
-  if (!lead.has_website)
-    return "vi que vocês ainda não têm um site e queria mostrar como ele pode trazer mais clientes.";
+  if (!lead.has_website) return "vi que vocês ainda não têm um site";
   if (lead.website && !lead.website.startsWith("https"))
-    return "vi que o site de vocês pode estar desatualizado e queria mostrar como modernizá-lo traz mais clientes.";
-  return "queria mostrar como um site mais forte pode trazer mais clientes pra vocês.";
+    return "vi que o site de vocês tá meio desatualizado";
+  return "achei o site de vocês, mas dá pra deixar bem mais forte";
 }
 
 export function resolveTemplate(
