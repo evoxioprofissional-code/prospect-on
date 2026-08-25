@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { nicheToOverpass } from "@/lib/niche";
+import { nicheToOverpass, nameStemPattern } from "@/lib/niche";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,18 +70,20 @@ async function discoverOSM(niche: string, city: string, limit: number) {
   const [south, north, west, east] = geo[0].boundingbox.map(Number);
   const bbox = `${south},${west},${north},${east}`;
 
-  // 2. Monta a query Overpass a partir do nicho
+  // 2. Monta a query Overpass a partir do nicho.
+  // Sempre uni as tags específicas COM uma busca por nome (tolerante a acento),
+  // para ampliar o alcance em cidades com poucos POIs bem tagueados.
   const { filters, fallback } = nicheToOverpass(niche);
-  const clauses =
-    filters.length > 0
-      ? filters
-          .map((f) => {
-            const [k, v] = f.split("=");
-            const tag = v ? `["${k}"="${v}"]` : `["${k}"]`;
-            return `nwr${tag}(${bbox});`;
-          })
-          .join("\n")
-      : `nwr["name"~"${escapeOverpass(fallback)}",i](${bbox});`;
+  const tagClauses = filters.map((f) => {
+    const [k, v] = f.split("=");
+    const tag = v ? `["${k}"="${v}"]` : `["${k}"]`;
+    return `nwr${tag}(${bbox});`;
+  });
+  const namePattern = nameStemPattern(fallback);
+  const nameClause = namePattern
+    ? `nwr["name"~"${namePattern}",i](${bbox});`
+    : "";
+  const clauses = [...tagClauses, nameClause].filter(Boolean).join("\n");
 
   const query = `[out:json][timeout:25];\n(\n${clauses}\n);\nout center tags ${limit * 3};`;
 
@@ -200,8 +202,4 @@ async function discoverGoogle(niche: string, city: string, limit: number) {
   });
 
   return NextResponse.json({ results });
-}
-
-function escapeOverpass(s: string): string {
-  return s.replace(/["\\]/g, "\\$&");
 }
