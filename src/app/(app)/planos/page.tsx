@@ -162,7 +162,7 @@ function PlanCard({
             className={`w-full h-11 rounded font-medium text-sm transition-colors disabled:opacity-60 ${
               p.highlight
                 ? "bg-brand hover:bg-brand-600 text-white"
-                : "border border-ink text-ink hover:bg-ink hover:text-white"
+                : "border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand"
             }`}
           >
             {busy === `${id}:card` ? "Abrindo…" : "Assinar com cartão"}

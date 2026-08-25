@@ -137,7 +137,7 @@ export default function DisparoPage() {
               localStorage.setItem(LS_EMPRESA, e.target.value);
             }}
             placeholder="Ex.: Studio X Sites"
-            className="mt-1 w-full h-11 px-3 border border-line rounded-lg bg-white outline-none focus:border-ink"
+            className="mt-1 w-full h-11 px-3 border border-line rounded-lg bg-paper outline-none focus:border-ink"
           />
         </label>
 
@@ -150,7 +150,7 @@ export default function DisparoPage() {
               className={`shrink-0 h-9 px-3 rounded-full text-sm border transition-colors ${
                 templateId === t.id
                   ? "bg-brand text-white border-brand"
-                  : "bg-white text-muted border-line hover:border-ink hover:text-ink"
+                  : "bg-paper text-muted border-line hover:border-ink hover:text-ink"
               }`}
             >
               {t.name}
@@ -166,7 +166,7 @@ export default function DisparoPage() {
             persist(templateId, e.target.value);
           }}
           rows={3}
-          className="w-full px-3 py-2 border border-line rounded-lg bg-white outline-none focus:border-ink resize-none text-sm"
+          className="w-full px-3 py-2 border border-line rounded-lg bg-paper outline-none focus:border-ink resize-none text-sm"
         />
         <div className="flex flex-wrap items-center gap-1 mt-2 text-xs text-muted">
           {["{empresa}", "{nome}", "{cidade}", "{nicho}", "{gancho}"].map((v) => (
@@ -252,7 +252,7 @@ export default function DisparoPage() {
                 }`}
               >
                 <div className="flex items-start gap-3 mb-3">
-                  <span className="h-9 w-9 shrink-0 rounded-lg bg-ink text-white grid place-items-center text-xs font-bold">
+                  <span className="h-9 w-9 shrink-0 rounded-lg bg-panel text-white grid place-items-center text-xs font-bold">
                     {initials(lead.name)}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -277,7 +277,7 @@ export default function DisparoPage() {
                     setOverrides((o) => ({ ...o, [lead.id]: e.target.value }))
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-line rounded-lg bg-white outline-none focus:border-ink resize-none text-sm leading-relaxed"
+                  className="w-full px-3 py-2 border border-line rounded-lg bg-paper outline-none focus:border-ink resize-none text-sm leading-relaxed"
                 />
 
                 <div className="flex flex-col sm:flex-row gap-2 mt-3">
@@ -321,7 +321,7 @@ function Chip({
       className={`shrink-0 h-9 px-3 rounded-full text-sm border transition-colors ${
         active
           ? "bg-brand text-white border-brand"
-          : "bg-white text-muted border-line hover:border-ink hover:text-ink"
+          : "bg-paper text-muted border-line hover:border-ink hover:text-ink"
       }`}
     >
       {children}

@@ -4,12 +4,26 @@
 
 :root {
   color-scheme: light;
+  --paper: 255 255 255;
+  --ink: 20 20 22;
+  --muted: 107 107 114;
+  --line: 230 230 233;
+  --soft: 245 245 244;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --paper: 32 32 36; /* cards (mais claro que o fundo) */
+  --ink: 236 236 239; /* texto */
+  --muted: 150 150 158;
+  --line: 48 48 53;
+  --soft: 20 20 23; /* fundo da página */
 }
 
 html,
 body {
-  background: #ffffff;
-  color: #141416;
+  background: rgb(var(--soft));
+  color: rgb(var(--ink));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -20,7 +34,7 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 600;
-  color: #6b6b72;
+  color: rgb(var(--muted));
 }
 
 /* Números tabulares para dados */
@@ -46,7 +60,7 @@ body {
 /* Faixa vermelha diagonal reutilizável (marca) */
 .brand-rule {
   height: 3px;
-  background: linear-gradient(90deg, #e11d2a 0 40%, #141416 40% 100%);
+  background: linear-gradient(90deg, #e11d2a 0 40%, rgb(var(--ink)) 40% 100%);
 }
 
 @keyframes fadeUp {

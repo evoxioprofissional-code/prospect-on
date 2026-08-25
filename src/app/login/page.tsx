@@ -51,7 +51,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr]">
       {/* Painel de marca */}
-      <aside className="relative hidden lg:flex flex-col justify-between bg-ink text-paper p-12 overflow-hidden">
+      <aside className="relative hidden lg:flex flex-col justify-between bg-panel text-white p-12 overflow-hidden">
         <div
           aria-hidden
           className="absolute -right-24 -top-24 h-96 w-96 rotate-12 bg-brand"
@@ -184,7 +184,7 @@ function Field({
         autoComplete={autoComplete}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="mt-1 w-full h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink focus:ring-2 focus:ring-brand/20 transition"
+        className="mt-1 w-full h-11 px-3 border border-line rounded bg-paper outline-none focus:border-ink focus:ring-2 focus:ring-brand/20 transition"
       />
     </label>
   );
@@ -205,7 +205,7 @@ function Wordmark({ dark = false }: { dark?: boolean }) {
       <span className="inline-block h-5 w-5 bg-brand rounded-sm" />
       <span
         className={`font-display font-bold text-lg tracking-tight ${
-          dark ? "text-ink" : "text-paper"
+          dark ? "text-ink" : "text-white"
         }`}
       >
         Prospect<span className="text-brand">On</span>

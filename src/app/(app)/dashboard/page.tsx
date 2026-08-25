@@ -362,7 +362,7 @@ function ActionsToday({ followups, attack }: { followups: Lead[]; attack: Lead[]
       )}
       <Link
         href="/disparo"
-        className="inline-flex items-center justify-center w-full h-10 rounded bg-ink text-white text-sm font-medium hover:bg-ink/90"
+        className="inline-flex items-center justify-center w-full h-10 rounded bg-brand hover:bg-brand-600 text-white text-sm font-medium"
       >
         Ir para a Central de Disparo →
       </Link>
@@ -456,7 +456,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       <div className="flex gap-3 justify-center mt-6">
         <Link
           href="/leads"
-          className="border border-ink text-ink hover:bg-ink hover:text-white font-medium h-11 px-5 rounded transition-colors inline-flex items-center"
+          className="border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand font-medium h-11 px-5 rounded transition-colors inline-flex items-center"
         >
           ⚡ Descobrir leads
         </Link>

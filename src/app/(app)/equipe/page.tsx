@@ -121,7 +121,7 @@ export default function EquipePage() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="email@do-membro.com"
                   disabled={!data.canInvite}
-                  className="flex-1 h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink disabled:bg-soft"
+                  className="flex-1 h-11 px-3 border border-line rounded bg-paper outline-none focus:border-ink disabled:bg-soft"
                 />
                 <button
                   disabled={!data.canInvite || busy}

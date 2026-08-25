@@ -1,15 +1,20 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        paper: "#FFFFFF",
-        ink: "#141416",
-        muted: "#6B6B72",
-        line: "#E6E6E9",
-        soft: "#F5F5F4",
+        // Tokens que trocam por tema (definidos em globals.css)
+        paper: "rgb(var(--paper) / <alpha-value>)",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        muted: "rgb(var(--muted) / <alpha-value>)",
+        line: "rgb(var(--line) / <alpha-value>)",
+        soft: "rgb(var(--soft) / <alpha-value>)",
+        // Superfície sempre escura (sidebar, avatares) — não inverte no dark
+        panel: "#141416",
+        // Marca (vermelho) — igual nos dois temas
         brand: {
           DEFAULT: "#E11D2A",
           600: "#C7141F",
@@ -26,8 +31,8 @@ const config: Config = {
         DEFAULT: "6px",
       },
       boxShadow: {
-        card: "0 1px 2px rgba(20,20,22,0.04)",
-        pop: "0 8px 30px rgba(20,20,22,0.10)",
+        card: "0 1px 2px rgba(0,0,0,0.05)",
+        pop: "0 8px 30px rgba(0,0,0,0.18)",
       },
     },
   },

@@ -59,7 +59,7 @@ export default function LeadModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-ink/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/50" onClick={onClose}>
       <div
         className="w-full max-w-xl bg-paper h-full overflow-y-auto shadow-pop fade-up"
         onClick={(e) => e.stopPropagation()}
@@ -120,7 +120,7 @@ export default function LeadModal({
               <select
                 value={form.status}
                 onChange={(e) => set("status", e.target.value as LeadInput["status"])}
-                className="mt-1 w-full h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink"
+                className="mt-1 w-full h-11 px-3 border border-line rounded bg-paper outline-none focus:border-ink"
               >
                 {STATUSES.map((s) => (
                   <option key={s.key} value={s.key}>
@@ -143,7 +143,7 @@ export default function LeadModal({
               type="date"
               value={form.next_followup ?? ""}
               onChange={(e) => set("next_followup", e.target.value || null)}
-              className="mt-1 w-full h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink"
+              className="mt-1 w-full h-11 px-3 border border-line rounded bg-paper outline-none focus:border-ink"
             />
           </label>
 
@@ -153,7 +153,7 @@ export default function LeadModal({
               value={form.notes ?? ""}
               onChange={(e) => set("notes", e.target.value)}
               rows={3}
-              className="mt-1 w-full px-3 py-2 border border-line rounded bg-white outline-none focus:border-ink resize-none"
+              className="mt-1 w-full px-3 py-2 border border-line rounded bg-paper outline-none focus:border-ink resize-none"
             />
           </label>
 
@@ -261,7 +261,7 @@ function InteractionLog({
         <select
           value={type}
           onChange={(e) => setType(e.target.value as Interaction["type"])}
-          className="h-10 px-2 border border-line rounded bg-white text-sm"
+          className="h-10 px-2 border border-line rounded bg-paper text-sm"
         >
           {TYPES.map((t) => (
             <option key={t} value={t}>
@@ -273,9 +273,9 @@ function InteractionLog({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Registrar interação…"
-          className="flex-1 h-10 px-3 border border-line rounded bg-white text-sm outline-none focus:border-ink"
+          className="flex-1 h-10 px-3 border border-line rounded bg-paper text-sm outline-none focus:border-ink"
         />
-        <button className="h-10 px-4 bg-ink text-white rounded text-sm">Add</button>
+        <button className="h-10 px-4 bg-brand hover:bg-brand-600 text-white rounded text-sm">Add</button>
       </form>
 
       {items.length === 0 ? (
@@ -324,7 +324,7 @@ function Input({
         required={required}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink"
+        className="mt-1 w-full h-11 px-3 border border-line rounded bg-paper outline-none focus:border-ink"
       />
     </label>
   );

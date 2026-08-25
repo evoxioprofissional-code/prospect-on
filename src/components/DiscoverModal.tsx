@@ -112,7 +112,7 @@ export default function DiscoverModal({
   const semSite = results.filter((r) => !r.has_website).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-ink/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/50" onClick={onClose}>
       <div
         className="w-full max-w-2xl bg-paper h-full overflow-y-auto shadow-pop fade-up"
         onClick={(e) => e.stopPropagation()}

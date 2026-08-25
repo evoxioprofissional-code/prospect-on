@@ -51,7 +51,7 @@ export default function LeadsPage() {
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setDiscover(true)}
-              className="flex-1 sm:flex-none border border-ink text-ink hover:bg-ink hover:text-white font-medium h-11 px-4 rounded transition-colors whitespace-nowrap"
+              className="flex-1 sm:flex-none border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand font-medium h-11 px-4 rounded transition-colors whitespace-nowrap"
             >
               ⚡ Descobrir
             </button>
@@ -72,7 +72,7 @@ export default function LeadsPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Buscar por nome, nicho, cidade, telefone…"
-          className="w-full h-11 pl-9 pr-3 border border-line rounded bg-white outline-none focus:border-ink"
+          className="w-full h-11 pl-9 pr-3 border border-line rounded bg-paper outline-none focus:border-ink"
         />
       </div>
 
@@ -148,7 +148,7 @@ function LeadCard({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
     >
       {/* Cabeçalho */}
       <div className="flex items-start gap-3">
-        <span className="h-9 w-9 shrink-0 rounded bg-ink text-white grid place-items-center text-xs font-bold">
+        <span className="h-9 w-9 shrink-0 rounded bg-panel text-white grid place-items-center text-xs font-bold">
           {initials(lead.name)}
         </span>
         <div className="min-w-0 flex-1">
@@ -213,7 +213,7 @@ function Chip({
       className={`h-9 px-3 rounded-full text-sm border transition-colors ${
         active
           ? "bg-brand text-white border-brand"
-          : "bg-white text-muted border-line hover:border-ink hover:text-ink"
+          : "bg-paper text-muted border-line hover:border-ink hover:text-ink"
       }`}
     >
       {children}

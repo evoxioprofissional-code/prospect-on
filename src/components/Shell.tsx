@@ -12,6 +12,7 @@ const NAV = [
   { href: "/disparo", label: "Disparo", icon: IconSend },
   { href: "/equipe", label: "Equipe", icon: IconUsers },
   { href: "/planos", label: "Planos", icon: IconStar },
+  { href: "/configuracoes", label: "Configurações", icon: IconGear },
 ];
 
 export default function Shell({
@@ -38,7 +39,7 @@ export default function Shell({
       <aside
         className={`${
           open ? "block" : "hidden"
-        } lg:block fixed lg:static inset-0 z-40 lg:z-auto bg-ink text-paper lg:min-h-screen`}
+        } lg:block fixed lg:static inset-0 z-40 lg:z-auto bg-panel text-white lg:min-h-screen`}
       >
         <div className="flex flex-col h-full p-4">
           <div className="flex items-center justify-between px-2 py-2">
@@ -98,7 +99,7 @@ export default function Shell({
 
       {/* Conteúdo */}
       <div className="flex flex-col min-h-screen">
-        <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-ink text-paper">
+        <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-panel text-white">
           <div className="flex items-center gap-2">
             <span className="inline-block h-4 w-4 bg-brand rounded-sm" />
             <span className="font-display font-bold tracking-tight">
@@ -169,6 +170,14 @@ function IconStar() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
       <polygon points="12 2 15 8.5 22 9.3 17 14 18.5 21 12 17.5 5.5 21 7 14 2 9.3 9 8.5 12 2" />
+    </svg>
+  );
+}
+function IconGear() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
     </svg>
   );
 }
