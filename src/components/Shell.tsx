@@ -45,7 +45,6 @@ export default function Shell({
         <div className="flex flex-col h-full p-4">
           <div className="flex items-center justify-between px-2 py-2">
             <div className="flex items-center gap-2">
-              <span className="inline-block h-5 w-5 bg-brand rounded-sm" />
               <span className="font-display font-bold text-lg tracking-tight">
                 Prospect<span className="text-brand">On</span>
               </span>
@@ -102,7 +101,6 @@ export default function Shell({
       <div className="flex flex-col min-h-screen">
         <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-panel text-white">
           <div className="flex items-center gap-2">
-            <span className="inline-block h-4 w-4 bg-brand rounded-sm" />
             <span className="font-display font-bold tracking-tight">
               Prospect<span className="text-brand">On</span>
             </span>

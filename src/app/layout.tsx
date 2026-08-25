@@ -14,7 +14,7 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Prospect On — prospecção para venda de sites",
+  title: "ProspectOn",
   description:
     "Encontre negócios sem site, organize seu funil e feche mais vendas.",
 };

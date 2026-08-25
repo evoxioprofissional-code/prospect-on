@@ -202,7 +202,6 @@ function Stat({ n, l }: { n: string; l: string }) {
 function Wordmark({ dark = false }: { dark?: boolean }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="inline-block h-5 w-5 bg-brand rounded-sm" />
       <span
         className={`font-display font-bold text-lg tracking-tight ${
           dark ? "text-ink" : "text-white"
