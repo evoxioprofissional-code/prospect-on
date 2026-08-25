@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLeads } from "@/lib/useLeads";
 import { STATUSES, type Lead, type LeadStatus } from "@/lib/types";
-import { DEFAULT_TEMPLATES, resolveTemplate } from "@/lib/templates";
+import { resolveTemplate } from "@/lib/templates";
 import { createClient } from "@/lib/supabase/client";
+import { useTemplates } from "@/lib/useTemplates";
+import TemplatesModal from "@/components/TemplatesModal";
 import {
   CAMPAIGN_STATUS_LABEL,
   DEFAULT_SETTINGS,
@@ -191,11 +193,18 @@ function NewCampaign({
   leadsLoading: boolean;
   onCreated: () => void;
 }) {
+  const {
+    templates,
+    create: createTemplate,
+    update: updateTemplate,
+    remove: removeTemplate,
+  } = useTemplates();
   const [open, setOpen] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [name, setName] = useState("");
   const [empresa, setEmpresa] = useState("");
-  const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATES[0].id);
-  const [body, setBody] = useState(DEFAULT_TEMPLATES[0].body);
+  const [templateId, setTemplateId] = useState("");
+  const [body, setBody] = useState("");
   const [filter, setFilter] = useState<Filter>("sem_site");
   const [settings, setSettings] = useState<CampaignSettings>(DEFAULT_SETTINGS);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -251,8 +260,16 @@ function NewCampaign({
     [withWhats, filter, niche, skipContacted, sentLeadIds]
   );
 
+  // Seleciona o primeiro modelo assim que a lista carrega.
+  useEffect(() => {
+    if (templates.length && !templateId) {
+      setTemplateId(templates[0].id);
+      setBody(templates[0].body);
+    }
+  }, [templates, templateId]);
+
   function pickTemplate(id: string) {
-    const t = DEFAULT_TEMPLATES.find((x) => x.id === id);
+    const t = templates.find((x) => x.id === id);
     if (!t) return;
     setTemplateId(id);
     setBody(t.body);
@@ -350,9 +367,18 @@ function NewCampaign({
       </div>
 
       {/* Modelo */}
-      <span className="eyebrow">Modelo da mensagem</span>
+      <div className="flex items-center justify-between">
+        <span className="eyebrow">Modelo da mensagem</span>
+        <button
+          type="button"
+          onClick={() => setShowTemplates(true)}
+          className="text-xs text-brand hover:underline"
+        >
+          Editar / adicionar modelos
+        </button>
+      </div>
       <div className="flex gap-2 overflow-x-auto pb-1 mt-1 -mx-1 px-1 mb-2">
-        {DEFAULT_TEMPLATES.map((t) => (
+        {templates.map((t) => (
           <button
             key={t.id}
             onClick={() => pickTemplate(t.id)}
@@ -486,6 +512,16 @@ function NewCampaign({
           {submitting ? "Criando…" : `Criar e começar a enviar`}
         </button>
       </div>
+
+      {showTemplates && (
+        <TemplatesModal
+          templates={templates}
+          onCreate={createTemplate}
+          onUpdate={updateTemplate}
+          onRemove={removeTemplate}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
     </div>
   );
 }
