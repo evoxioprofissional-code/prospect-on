@@ -186,7 +186,12 @@ function Card({ lead, dragging }: { lead: Lead; dragging?: boolean }) {
     >
       <div className="flex items-start justify-between gap-2">
         <p className="font-medium text-sm leading-tight">{lead.name}</p>
-        {!lead.has_website && <span title="Sem site">🔥</span>}
+        {!lead.has_website && (
+          <span
+            className="inline-block h-1.5 w-1.5 rounded-full bg-brand align-middle"
+            title="Sem site"
+          />
+        )}
       </div>
       <p className="text-xs text-muted mt-1">
         {[lead.niche, lead.city].filter(Boolean).join(" · ") || "—"}

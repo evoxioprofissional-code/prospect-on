@@ -22,7 +22,7 @@ export const DEFAULT_TEMPLATES: Template[] = [
     id: "pessoal",
     name: "Pessoal e leve",
     body:
-      "Opa! Aqui é da {empresa}. Passei pela {nome} e curti o trabalho de vocês 👏 Cês têm site próprio ou tá só no Instagram? Pergunto porque {gancho} e queria te mostrar uma ideia rápida, sem compromisso nenhum.",
+      "Opa! Aqui é da {empresa}. Passei pela {nome} e curti o trabalho de vocês. Cês têm site próprio ou tá só no Instagram? Pergunto porque {gancho} e queria te mostrar uma ideia rápida, sem compromisso nenhum.",
   },
   {
     id: "concorrente",

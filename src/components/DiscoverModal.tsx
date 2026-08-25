@@ -193,7 +193,7 @@ export default function DiscoverModal({
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-muted">
                 <span className="font-bold text-ink tnum">{results.length}</span> encontrados ·{" "}
-                <span className="text-brand font-bold tnum">{semSite}</span> sem site 🔥
+                <span className="text-brand font-bold tnum">{semSite}</span> sem site
               </p>
               <button
                 onClick={() =>
@@ -231,7 +231,7 @@ export default function DiscoverModal({
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium">{r.name}</p>
                         {!r.has_website ? (
-                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand/10 text-brand">🔥 sem site</span>
+                          <span className="text-[11px] px-1.5 py-0.5 rounded bg-brand/10 text-brand">sem site</span>
                         ) : (
                           <span className="text-[11px] px-1.5 py-0.5 rounded bg-soft text-muted">tem site</span>
                         )}

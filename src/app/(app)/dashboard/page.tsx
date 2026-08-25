@@ -325,7 +325,7 @@ function ActionsToday({ followups, attack }: { followups: Lead[]; attack: Lead[]
   if (nada)
     return (
       <p className="text-sm text-muted">
-        Tudo em dia. 🎯 Descubra novos leads ou avance os do funil.
+        Tudo em dia. Descubra novos leads ou avance os do funil.
       </p>
     );
   return (
@@ -349,7 +349,7 @@ function ActionsToday({ followups, attack }: { followups: Lead[]; attack: Lead[]
       )}
       {attack.length > 0 && (
         <div>
-          <p className="text-xs font-semibold text-ink mb-2">🔥 Atacar (sem site)</p>
+          <p className="text-xs font-semibold text-ink mb-2">Atacar (sem site)</p>
           <ul className="space-y-2">
             {attack.map((l) => (
               <li key={l.id} className="flex items-center justify-between gap-2">

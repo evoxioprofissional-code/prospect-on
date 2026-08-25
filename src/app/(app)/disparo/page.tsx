@@ -205,7 +205,7 @@ export default function DisparoPage() {
           Novos
         </Chip>
         <Chip active={filter === "sem_site"} onClick={() => setFilter("sem_site")} accent>
-          🔥 Sem site
+          Sem site
         </Chip>
         <Chip active={filter === "todos"} onClick={() => setFilter("todos")}>
           Todos
@@ -258,7 +258,12 @@ export default function DisparoPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate leading-tight">
                       {lead.name}
-                      {!lead.has_website && <span className="ml-1.5" title="Sem site">🔥</span>}
+                      {!lead.has_website && (
+                        <span
+                          className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-brand align-middle"
+                          title="Sem site"
+                        />
+                      )}
                     </p>
                     <p className="text-xs text-muted truncate">
                       {[lead.niche, lead.city].filter(Boolean).join(" · ") || "—"} · {lead.whatsapp}
@@ -286,7 +291,7 @@ export default function DisparoPage() {
                     disabled={isAi}
                     className="h-10 px-3 rounded-lg border border-line text-sm hover:border-ink disabled:opacity-60 order-2 sm:order-1"
                   >
-                    {isAi ? "Gerando…" : "✨ Gerar com IA"}
+                    {isAi ? "Gerando…" : "Gerar com IA"}
                   </button>
                   <button
                     onClick={() => enviar(lead)}

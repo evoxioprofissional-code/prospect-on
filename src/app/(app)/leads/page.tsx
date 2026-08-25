@@ -82,7 +82,7 @@ export default function LeadsPage() {
           Todos
         </Chip>
         <Chip active={filter === "sem_site"} onClick={() => setFilter("sem_site")} accent>
-          🔥 Sem site
+          Sem site
         </Chip>
         {STATUSES.map((s) => (
           <Chip key={s.key} active={filter === s.key} onClick={() => setFilter(s.key)}>
@@ -243,7 +243,7 @@ function HeatBadge({ level, label }: { level: "quente" | "morno" | "frio"; label
       : level === "morno"
       ? "bg-amber-50 text-amber-700"
       : "bg-soft text-muted";
-  const dot = level === "quente" ? "🔥" : level === "morno" ? "•" : "";
+  const dot = level === "frio" ? "" : "•";
   return (
     <span className={`shrink-0 inline-block text-[11px] px-2 py-1 rounded ${tone}`}>
       {dot} {label}

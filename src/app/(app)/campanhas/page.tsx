@@ -389,7 +389,7 @@ function NewCampaign({
       <span className="eyebrow block mt-4">Quem vai receber</span>
       <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 mt-1">
         <Chip active={filter === "sem_site"} onClick={() => setFilter("sem_site")} accent>
-          🔥 Sem site
+          Sem site
         </Chip>
         <Chip active={filter === "novo"} onClick={() => setFilter("novo")}>Novos</Chip>
         <Chip active={filter === "todos"} onClick={() => setFilter("todos")}>Todos</Chip>
