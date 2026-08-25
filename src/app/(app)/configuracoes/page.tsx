@@ -76,10 +76,10 @@ export default function ConfiguracoesPage() {
       <div className="space-y-6">
         {/* Aparência */}
         <Section title="Aparência" desc="Escolha o modo de cor do aplicativo.">
-          <div className="grid grid-cols-3 gap-2 max-w-sm">
-            <ThemeButton label="Claro" active={theme === "light"} onClick={() => pickTheme("light")} icon="☀️" />
-            <ThemeButton label="Escuro" active={theme === "dark"} onClick={() => pickTheme("dark")} icon="🌙" />
-            <ThemeButton label="Sistema" active={theme === "system"} onClick={() => pickTheme("system")} icon="🖥️" />
+          <div className="grid grid-cols-3 gap-3 max-w-md">
+            <ThemeButton label="Claro" mode="light" active={theme === "light"} onClick={() => pickTheme("light")} />
+            <ThemeButton label="Escuro" mode="dark" active={theme === "dark"} onClick={() => pickTheme("dark")} />
+            <ThemeButton label="Sistema" mode="system" active={theme === "system"} onClick={() => pickTheme("system")} />
           </div>
         </Section>
 
@@ -184,25 +184,57 @@ function ThemeButton({
   label,
   active,
   onClick,
-  icon,
+  mode,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
-  icon: string;
+  mode: ThemeMode;
 }) {
+  const Icon = mode === "light" ? IconSun : mode === "dark" ? IconMoon : IconMonitor;
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-1 h-20 rounded-lg border transition-colors ${
+      className={`relative flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 transition-colors ${
         active
-          ? "border-brand bg-brand-50 text-brand-700"
-          : "border-line hover:border-ink text-ink"
+          ? "border-brand bg-brand/10 text-brand"
+          : "border-line text-ink hover:border-ink/40"
       }`}
     >
-      <span className="text-xl">{icon}</span>
+      {active && (
+        <span className="absolute top-2 right-2 h-4 w-4 rounded-full bg-brand text-white grid place-items-center">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </span>
+      )}
+      <Icon />
       <span className="text-sm font-medium">{label}</span>
     </button>
+  );
+}
+
+function IconSun() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  );
+}
+function IconMoon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+    </svg>
+  );
+}
+function IconMonitor() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+    </svg>
   );
 }
 
