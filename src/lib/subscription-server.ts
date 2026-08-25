@@ -44,21 +44,21 @@ export async function getSubState(userId: string): Promise<SubState> {
   const ownerId = await resolveTeamOwner(userId);
 
   let { data } = await admin
-    .from("subscriptions")
+    .from("prospect_subscriptions")
     .select("*")
     .eq("user_id", ownerId)
     .maybeSingle();
 
   if (!data) {
     const ins = await admin
-      .from("subscriptions")
+      .from("prospect_subscriptions")
       .insert({ user_id: ownerId })
       .select("*")
       .single();
     data = ins.data;
   } else if (!sameMonth(data.period_start)) {
     const upd = await admin
-      .from("subscriptions")
+      .from("prospect_subscriptions")
       .update({
         searches_used: 0,
         period_start: new Date().toISOString().slice(0, 10),
@@ -101,13 +101,13 @@ export async function consumeSearch(userId: string): Promise<void> {
   const admin = createAdminClient();
   const ownerId = await resolveTeamOwner(userId);
   const { data } = await admin
-    .from("subscriptions")
+    .from("prospect_subscriptions")
     .select("searches_used")
     .eq("user_id", ownerId)
     .maybeSingle();
   const used = data?.searches_used ?? 0;
   await admin
-    .from("subscriptions")
+    .from("prospect_subscriptions")
     .update({ searches_used: used + 1 })
     .eq("user_id", ownerId);
 }

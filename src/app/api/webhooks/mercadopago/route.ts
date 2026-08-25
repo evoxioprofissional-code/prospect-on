@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       if (pre.status === "authorized") {
         const end = new Date();
         end.setMonth(end.getMonth() + 1);
-        await admin.from("subscriptions").upsert(
+        await admin.from("prospect_subscriptions").upsert(
           {
             user_id: userId,
             plan,
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         );
       } else if (pre.status === "cancelled" || pre.status === "paused") {
         await admin
-          .from("subscriptions")
+          .from("prospect_subscriptions")
           .update({ status: "canceled" })
           .eq("user_id", userId);
       }
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
     if (pay.status === "approved") {
       const end = new Date();
       end.setDate(end.getDate() + 30);
-      await admin.from("subscriptions").upsert(
+      await admin.from("prospect_subscriptions").upsert(
         {
           user_id: userId,
           plan,
