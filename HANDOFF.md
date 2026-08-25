@@ -87,11 +87,33 @@ ANTHROPIC_API_KEY                  # opcional (IA no disparo)
 2. Conta do dono `mauriciobcoura@gmail.com` já setada como **Agência vitalícia**
    direto no banco (`prospect_subscriptions`, provider `manual_vitalicio`,
    `current_period_end` 2099).
-3. **Construir o DISPARO AUTOMÁTICO** (próximo grande item — plano abaixo).
+3. ~~Construir o DISPARO AUTOMÁTICO~~ ✅ **FEITO** (ver seção abaixo). Para
+   ligar em produção faltam 2 passos manuais:
+   - Rodar `supabase/campaigns.sql` no SQL Editor.
+   - Subir a pasta `worker/` numa VPS/Railway/Render 24/7 (ver `worker/README.md`),
+     com `SUPABASE_URL`, `SUPABASE_SERVICE_KEY` e `WORKER_OWNER_ID`. Escanear o QR
+     uma vez (aparece em *Campanhas → WhatsApp* no app).
 
 ---
 
-## PRÓXIMO: Disparo automático (API não oficial, robusto, com delays)
+## Disparo automático (API não oficial, robusto, com delays) — CONSTRUÍDO
+
+**Status:** implementado. Arquivos:
+- SQL: `supabase/campaigns.sql` (`prospect_campaigns`, `prospect_campaign_messages`,
+  `prospect_wa_sessions`, com RLS por time).
+- App: página `/campanhas` (`src/app/(app)/campanhas/page.tsx`) + API
+  `src/app/api/campaigns/route.ts` (GET lista+conexão, POST cria+enfileira,
+  PATCH pausar/retomar/encerrar, DELETE). Item "Campanhas" no menu (`Shell.tsx`).
+  Tipos em `src/lib/campaigns.ts`.
+- Worker: pasta `worker/` (Node + Baileys) — QR-login, polling da fila, jitter/
+  caps/janela/pausa-em-lote, reconexão, espelha status+QR em `prospect_wa_sessions`.
+
+**Como funciona:** o app cria a campanha resolvendo a mensagem por lead (fica pronta
+na fila); o worker (um número por time, `team_id = WORKER_OWNER_ID`) lê as campanhas
+`running`, respeita janela/limite diário, envia com intervalo aleatório e marca
+`sent`/`failed`. Credenciais do WhatsApp só no `AUTH_DIR` do worker (nunca no banco).
+
+### Plano original (para referência)
 
 **Decisões já tomadas:**
 - Biblioteca: **Baileys** (`@whiskeysockets/baileys`) — WebSocket, sem Chrome.

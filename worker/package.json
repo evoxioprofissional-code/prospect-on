@@ -1,0 +1,16 @@
+{
+  "name": "prospecton-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker de disparo automático do ProspectOn (fila Supabase -> Evolution API).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}
