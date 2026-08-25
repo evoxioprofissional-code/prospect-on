@@ -18,6 +18,7 @@ export const STATUSES: { key: LeadStatus; label: string }[] = [
 export interface Lead {
   id: string;
   user_id: string;
+  team_id: string | null;
   name: string;
   niche: string | null;
   city: string | null;
@@ -37,7 +38,7 @@ export interface Lead {
 
 export type LeadInput = Omit<
   Lead,
-  "id" | "user_id" | "created_at" | "updated_at"
+  "id" | "user_id" | "team_id" | "created_at" | "updated_at"
 >;
 
 export interface Interaction {

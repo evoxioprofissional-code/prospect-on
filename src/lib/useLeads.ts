@@ -25,22 +25,38 @@ export function useLeads() {
     load();
   }, [load]);
 
+  // Descobre o "time" do usuário: se ele é membro ativo de algum time,
+  // usa o team_id do dono; senão, o próprio id (time solo).
+  const resolveTeam = useCallback(
+    async (userId: string) => {
+      const { data } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .eq("member_id", userId)
+        .eq("status", "active")
+        .maybeSingle();
+      return data?.team_id ?? userId;
+    },
+    [supabase]
+  );
+
   const create = useCallback(
     async (input: LeadInput) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return { error: "Sessão expirada" };
+      const teamId = await resolveTeam(user.id);
       const { data, error } = await supabase
         .from("leads")
-        .insert({ ...input, user_id: user.id })
+        .insert({ ...input, user_id: user.id, team_id: teamId })
         .select("*")
         .single();
       if (error) return { error: error.message };
       setLeads((prev) => [data as Lead, ...prev]);
       return { data: data as Lead };
     },
-    [supabase]
+    [supabase, resolveTeam]
   );
 
   const createMany = useCallback(
@@ -49,7 +65,12 @@ export function useLeads() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return { error: "Sessão expirada", count: 0 };
-      const rows = inputs.map((i) => ({ ...i, user_id: user.id }));
+      const teamId = await resolveTeam(user.id);
+      const rows = inputs.map((i) => ({
+        ...i,
+        user_id: user.id,
+        team_id: teamId,
+      }));
       const { data, error } = await supabase
         .from("leads")
         .insert(rows)
@@ -58,7 +79,7 @@ export function useLeads() {
       setLeads((prev) => [...((data as Lead[]) ?? []), ...prev]);
       return { count: (data as Lead[])?.length ?? 0 };
     },
-    [supabase]
+    [supabase, resolveTeam]
   );
 
   const update = useCallback(

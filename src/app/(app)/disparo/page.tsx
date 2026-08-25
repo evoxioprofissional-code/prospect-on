@@ -115,6 +115,7 @@ export default function DisparoPage() {
       await supabase.from("interactions").insert({
         lead_id: lead.id,
         user_id: user.id,
+        team_id: lead.team_id ?? user.id,
         type: "whatsapp",
         content: msg,
       });

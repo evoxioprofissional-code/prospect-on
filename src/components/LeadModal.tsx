@@ -39,7 +39,7 @@ export default function LeadModal({
 
   useEffect(() => {
     if (lead) {
-      const { id, user_id, created_at, updated_at, ...rest } = lead;
+      const { id, user_id, team_id, created_at, updated_at, ...rest } = lead;
       setForm(rest);
     } else {
       setForm(EMPTY);
@@ -201,13 +201,19 @@ export default function LeadModal({
           </div>
         </form>
 
-        {editing && <InteractionLog leadId={lead!.id} />}
+        {editing && <InteractionLog leadId={lead!.id} teamId={lead!.team_id} />}
       </div>
     </div>
   );
 }
 
-function InteractionLog({ leadId }: { leadId: string }) {
+function InteractionLog({
+  leadId,
+  teamId,
+}: {
+  leadId: string;
+  teamId: string | null;
+}) {
   const supabase = createClient();
   const [items, setItems] = useState<Interaction[]>([]);
   const [type, setType] = useState<Interaction["type"]>("nota");
@@ -231,7 +237,13 @@ function InteractionLog({ leadId }: { leadId: string }) {
     if (!user) return;
     const { data } = await supabase
       .from("interactions")
-      .insert({ lead_id: leadId, user_id: user.id, type, content })
+      .insert({
+        lead_id: leadId,
+        user_id: user.id,
+        team_id: teamId ?? user.id,
+        type,
+        content,
+      })
       .select("*")
       .single();
     if (data) {
