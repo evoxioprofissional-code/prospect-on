@@ -51,9 +51,12 @@ export default function LeadsPage() {
           <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setDiscover(true)}
-              className="flex-1 sm:flex-none border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand font-medium h-11 px-4 rounded transition-colors whitespace-nowrap"
+              className="flex-1 sm:flex-none border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand font-medium h-11 px-4 rounded transition-colors whitespace-nowrap inline-flex items-center justify-center gap-1.5"
             >
-              ⚡ Descobrir
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+              </svg>
+              Descobrir
             </button>
             <button
               onClick={() => setEditing(null)}
@@ -166,7 +169,9 @@ function LeadCard({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
       <div className="mt-3 text-sm text-muted truncate">
         {contact ? (
           <span className="inline-flex items-center gap-1.5">
-            <span className="text-ink/40">✆</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-ink/40 shrink-0">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92Z" />
+            </svg>
             {contact}
           </span>
         ) : (

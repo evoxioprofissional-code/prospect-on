@@ -456,9 +456,12 @@ function EmptyState({ onNew }: { onNew: () => void }) {
       <div className="flex gap-3 justify-center mt-6">
         <Link
           href="/leads"
-          className="border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand font-medium h-11 px-5 rounded transition-colors inline-flex items-center"
+          className="border border-ink text-ink hover:bg-brand hover:text-white hover:border-brand font-medium h-11 px-5 rounded transition-colors inline-flex items-center gap-1.5"
         >
-          ⚡ Descobrir leads
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          Descobrir leads
         </Link>
         <button
           onClick={onNew}
