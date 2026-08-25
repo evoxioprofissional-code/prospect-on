@@ -19,6 +19,23 @@ export interface DiscoveredLead {
   source: "osm" | "google";
 }
 
+// Perfis de rede social / agregadores NÃO são "site próprio". O Google às vezes
+// devolve o Instagram no campo websiteUri — sem isso, o lead era marcado como
+// "tem site" por engano e sumia da mira de "sem site".
+const SOCIAL_RE =
+  /(instagram\.com|instagr\.am|facebook\.com|fb\.com|fb\.me|wa\.me|whatsapp\.com|linktr\.ee|linktree|twitter\.com|x\.com|tiktok\.com|youtube\.com|youtu\.be|linkedin\.com|t\.me|telegram\.me|g\.page|goo\.gl|maps\.app\.goo\.gl|beacons\.ai|bio\.link)/i;
+
+function normalizeSite(rawUrl: string, currentInstagram: string) {
+  const url = (rawUrl || "").trim();
+  if (!url) return { website: "", instagram: currentInstagram };
+  if (SOCIAL_RE.test(url)) {
+    const instagram =
+      currentInstagram || (/instagram\.com|instagr\.am/i.test(url) ? url : "");
+    return { website: "", instagram };
+  }
+  return { website: url, instagram: currentInstagram };
+}
+
 export async function POST(req: Request) {
   let body: { source?: string; niche?: string; city?: string; limit?: number };
   try {
@@ -136,12 +153,15 @@ async function discoverOSM(niche: string, city: string, limit: number) {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const website = t.website || t["contact:website"] || "";
     const phone =
       t.phone || t["contact:phone"] || t["contact:mobile"] || "";
     const address = [t["addr:street"], t["addr:housenumber"], t["addr:suburb"]]
       .filter(Boolean)
       .join(", ");
+    const { website, instagram } = normalizeSite(
+      t.website || t["contact:website"] || "",
+      t["contact:instagram"] || ""
+    );
 
     results.push({
       name,
@@ -149,7 +169,7 @@ async function discoverOSM(niche: string, city: string, limit: number) {
       city,
       phone,
       whatsapp: t["contact:whatsapp"] || phone,
-      instagram: t["contact:instagram"] || "",
+      instagram,
       website,
       has_website: !!website,
       address,
@@ -229,15 +249,16 @@ async function discoverGoogle(niche: string, city: string, limit: number) {
       if (seen.has(key2)) continue;
       seen.add(key2);
       const phone = p.nationalPhoneNumber || "";
+      const { website, instagram } = normalizeSite(p.websiteUri || "", "");
       results.push({
         name,
         niche,
         city,
         phone,
         whatsapp: phone,
-        instagram: "",
-        website: p.websiteUri || "",
-        has_website: !!p.websiteUri,
+        instagram,
+        website,
+        has_website: !!website,
         address: p.formattedAddress || "",
         source: "google" as const,
       });
