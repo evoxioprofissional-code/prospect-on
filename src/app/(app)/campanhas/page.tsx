@@ -169,9 +169,9 @@ function ConnectionCard({
 
       {status === "desconectado" && !qr && loaded && (
         <p className="text-xs text-muted mt-2 leading-relaxed">
-          Conecte o número do disparo escaneando o QR. Se nada acontecer, o
-          Evolution API pode estar fora do ar — confira a VPS
-          (<code className="bg-soft px-1 rounded">deploy/README.md</code>).
+          Conecte o número que vai fazer os disparos: clique em{" "}
+          <b className="text-ink">Conectar WhatsApp</b> e escaneie o QR pelo
+          celular, em Aparelhos conectados.
         </p>
       )}
     </div>
