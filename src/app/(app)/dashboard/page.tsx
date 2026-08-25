@@ -28,7 +28,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto">
       <PageHeader
         eyebrow="Visão geral"
         title="Painel"

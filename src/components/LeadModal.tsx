@@ -82,17 +82,17 @@ export default function LeadModal({
         <form onSubmit={submit} className="p-6 space-y-5">
           <Input label="Nome do negócio *" value={form.name} onChange={(v) => set("name", v)} required />
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Nicho" value={form.niche ?? ""} onChange={(v) => set("niche", v)} placeholder="Restaurante, clínica…" />
             <Input label="Cidade" value={form.city ?? ""} onChange={(v) => set("city", v)} />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Telefone" value={form.phone ?? ""} onChange={(v) => set("phone", v)} />
             <Input label="WhatsApp" value={form.whatsapp ?? ""} onChange={(v) => set("whatsapp", v)} placeholder="(11) 90000-0000" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="Instagram" value={form.instagram ?? ""} onChange={(v) => set("instagram", v)} placeholder="@perfil" />
             <Input label="E-mail" type="email" value={form.email ?? ""} onChange={(v) => set("email", v)} />
           </div>
@@ -114,7 +114,7 @@ export default function LeadModal({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="eyebrow">Etapa</span>
               <select

@@ -64,7 +64,7 @@ export default function EquipePage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-3xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-3xl mx-auto">
       <PageHeader
         eyebrow="Colaboração"
         title="Equipe"

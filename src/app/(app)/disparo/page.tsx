@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLeads } from "@/lib/useLeads";
 import { createClient } from "@/lib/supabase/client";
 import { STATUSES, type Lead, type LeadStatus } from "@/lib/types";
-import { whatsappLink } from "@/lib/format";
+import { whatsappLink, initials } from "@/lib/format";
 import { DEFAULT_TEMPLATES, resolveTemplate } from "@/lib/templates";
 import PageHeader from "@/components/PageHeader";
 
@@ -17,7 +17,6 @@ export default function DisparoPage() {
   const { leads, loading, update } = useLeads();
   const supabase = createClient();
 
-  const [filter, setFilter] = useState<Filter>("novo");
   const [empresa, setEmpresa] = useState("");
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATES[0].id);
   const [body, setBody] = useState(DEFAULT_TEMPLATES[0].body);
@@ -25,8 +24,8 @@ export default function DisparoPage() {
   const [aiLoading, setAiLoading] = useState<Set<string>>(new Set());
   const [aiError, setAiError] = useState<string | null>(null);
   const [sent, setSent] = useState<Set<string>>(new Set());
+  const [filter, setFilter] = useState<Filter>("novo");
 
-  // Carrega template + nome da empresa salvos
   useEffect(() => {
     const raw = localStorage.getItem(LS_KEY);
     if (raw) {
@@ -49,26 +48,25 @@ export default function DisparoPage() {
     if (!t) return;
     setTemplateId(id);
     setBody(t.body);
-    setOverrides({}); // volta a derivar do template novo
+    setOverrides({});
     persist(id, t.body);
   }
 
-  // Só dá pra disparar quem tem WhatsApp
-  const withWhats = useMemo(
-    () => leads.filter((l) => !!l.whatsapp),
-    [leads]
-  );
+  const withWhats = useMemo(() => leads.filter((l) => !!l.whatsapp), [leads]);
 
-  const fila = useMemo(() => {
-    return withWhats.filter((l) => {
-      if (filter === "sem_site") return !l.has_website;
-      if (filter !== "todos") return l.status === filter;
-      return true;
-    });
-  }, [withWhats, filter]);
+  const fila = useMemo(
+    () =>
+      withWhats.filter((l) => {
+        if (filter === "sem_site") return !l.has_website;
+        if (filter !== "todos") return l.status === filter;
+        return true;
+      }),
+    [withWhats, filter]
+  );
 
   const semWhats = leads.length - withWhats.length;
   const enviados = fila.filter((l) => sent.has(l.id)).length;
+  const progress = fila.length ? Math.round((enviados / fila.length) * 100) : 0;
 
   function messageFor(lead: Lead): string {
     return overrides[lead.id] ?? resolveTemplate(body, lead, empresa);
@@ -105,8 +103,6 @@ export default function DisparoPage() {
     const msg = messageFor(lead);
     window.open(whatsappLink(lead.whatsapp!, msg), "_blank", "noopener");
     setSent((s) => new Set(s).add(lead.id));
-
-    // marca como Contatado (se ainda for Novo) e registra no histórico
     if (lead.status === "novo") await update(lead.id, { status: "contatado" });
     const {
       data: { user },
@@ -123,16 +119,15 @@ export default function DisparoPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-5xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-5xl mx-auto">
       <PageHeader
         eyebrow="Abordagem em fila"
         title="Central de Disparo"
         subtitle="Mensagem personalizada por lead, enviada em 1 toque no WhatsApp."
       />
 
-      {/* Editor de template */}
-      <div className="bg-paper border border-line rounded-lg p-5 mb-6">
-        {/* Nome da empresa (preenche {empresa} em todos os modelos) */}
+      {/* Configuração da mensagem */}
+      <div className="bg-paper border border-line rounded-xl p-4 sm:p-5 mb-5">
         <label className="block mb-4">
           <span className="eyebrow">Sua empresa</span>
           <input
@@ -142,19 +137,17 @@ export default function DisparoPage() {
               localStorage.setItem(LS_EMPRESA, e.target.value);
             }}
             placeholder="Ex.: Studio X Sites"
-            className="mt-1 w-full h-11 px-3 border border-line rounded bg-white outline-none focus:border-ink"
+            className="mt-1 w-full h-11 px-3 border border-line rounded-lg bg-white outline-none focus:border-ink"
           />
-          <span className="text-xs text-muted mt-1 block">
-            Preenchido uma vez — entra automático em todas as mensagens.
-          </span>
         </label>
 
-        <div className="flex flex-wrap gap-2 mb-4">
+        <span className="eyebrow">Modelo</span>
+        <div className="flex gap-2 overflow-x-auto pb-1 mt-1 -mx-1 px-1 mb-3">
           {DEFAULT_TEMPLATES.map((t) => (
             <button
               key={t.id}
               onClick={() => pickTemplate(t.id)}
-              className={`h-9 px-3 rounded-full text-sm border transition-colors ${
+              className={`shrink-0 h-9 px-3 rounded-full text-sm border transition-colors ${
                 templateId === t.id
                   ? "bg-ink text-white border-ink"
                   : "bg-white text-muted border-line hover:border-ink hover:text-ink"
@@ -164,37 +157,50 @@ export default function DisparoPage() {
             </button>
           ))}
         </div>
-        <label className="block">
-          <span className="eyebrow">Modelo da mensagem</span>
-          <textarea
-            value={body}
-            onChange={(e) => {
-              setBody(e.target.value);
-              setOverrides({});
-              persist(templateId, e.target.value);
-            }}
-            rows={3}
-            className="mt-1 w-full px-3 py-2 border border-line rounded bg-white outline-none focus:border-ink resize-none text-sm"
-          />
-        </label>
-        <p className="text-xs text-muted mt-2">
-          Variáveis:{" "}
+
+        <textarea
+          value={body}
+          onChange={(e) => {
+            setBody(e.target.value);
+            setOverrides({});
+            persist(templateId, e.target.value);
+          }}
+          rows={3}
+          className="w-full px-3 py-2 border border-line rounded-lg bg-white outline-none focus:border-ink resize-none text-sm"
+        />
+        <div className="flex flex-wrap items-center gap-1 mt-2 text-xs text-muted">
           {["{empresa}", "{nome}", "{cidade}", "{nicho}", "{gancho}"].map((v) => (
-            <code key={v} className="bg-soft px-1.5 py-0.5 rounded mr-1">
+            <code key={v} className="bg-soft px-1.5 py-0.5 rounded">
               {v}
             </code>
           ))}
-          — <b>{"{gancho}"}</b> muda sozinho conforme o lead ter site ou não.
-        </p>
+          <span className="ml-1">preenchem sozinhos.</span>
+        </div>
         {aiError && (
-          <p className="text-sm text-brand-700 bg-brand-50 border border-brand/30 rounded px-3 py-2 mt-3">
+          <p className="text-sm text-brand-700 bg-brand-50 border border-brand/30 rounded-lg px-3 py-2 mt-3">
             {aiError}
           </p>
         )}
       </div>
 
-      {/* Filtros + progresso */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      {/* Progresso */}
+      <div className="mb-3">
+        <div className="flex items-center justify-between text-sm mb-1.5">
+          <span className="text-muted">Fila de disparo</span>
+          <span className="tnum font-medium">
+            {enviados}<span className="text-muted">/{fila.length} enviados</span>
+          </span>
+        </div>
+        <div className="h-1.5 bg-soft rounded-full overflow-hidden">
+          <div
+            className="h-full bg-green-500 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 mb-4">
         <Chip active={filter === "novo"} onClick={() => setFilter("novo")}>
           Novos
         </Chip>
@@ -209,9 +215,6 @@ export default function DisparoPage() {
             {s.label}
           </Chip>
         ))}
-        <span className="ml-auto text-sm text-muted tnum">
-          {enviados}/{fila.length} enviados
-        </span>
       </div>
 
       {semWhats > 0 && (
@@ -223,9 +226,13 @@ export default function DisparoPage() {
 
       {/* Fila */}
       {loading ? (
-        <div className="text-muted">Carregando fila…</div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-36 rounded-xl border border-line bg-soft animate-pulse" />
+          ))}
+        </div>
       ) : fila.length === 0 ? (
-        <div className="border border-dashed border-line rounded-lg p-12 text-center text-muted">
+        <div className="border border-dashed border-line rounded-xl p-10 text-center text-muted">
           Nenhum lead com WhatsApp nesse filtro.
         </div>
       ) : (
@@ -236,22 +243,27 @@ export default function DisparoPage() {
             return (
               <li
                 key={lead.id}
-                className={`border rounded-lg p-4 bg-paper ${
-                  isSent ? "border-green-200 bg-green-50/40" : "border-line"
+                className={`border rounded-xl p-4 transition-colors ${
+                  isSent ? "border-green-200 bg-green-50/50" : "border-line bg-paper"
                 }`}
               >
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="min-w-0">
-                    <p className="font-semibold truncate">
+                <div className="flex items-start gap-3 mb-3">
+                  <span className="h-9 w-9 shrink-0 rounded-lg bg-ink text-white grid place-items-center text-xs font-bold">
+                    {initials(lead.name)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate leading-tight">
                       {lead.name}
-                      {!lead.has_website && <span className="ml-2" title="Sem site">🔥</span>}
+                      {!lead.has_website && <span className="ml-1.5" title="Sem site">🔥</span>}
                     </p>
                     <p className="text-xs text-muted truncate">
                       {[lead.niche, lead.city].filter(Boolean).join(" · ") || "—"} · {lead.whatsapp}
                     </p>
                   </div>
                   {isSent && (
-                    <span className="shrink-0 text-xs text-green-700 font-medium">✓ Enviado</span>
+                    <span className="shrink-0 inline-flex items-center gap-1 text-xs text-green-700 font-medium bg-green-100 px-2 py-1 rounded-full">
+                      ✓ Enviado
+                    </span>
                   )}
                 </div>
 
@@ -260,24 +272,23 @@ export default function DisparoPage() {
                   onChange={(e) =>
                     setOverrides((o) => ({ ...o, [lead.id]: e.target.value }))
                   }
-                  rows={2}
-                  className="w-full px-3 py-2 border border-line rounded bg-white outline-none focus:border-ink resize-none text-sm"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-line rounded-lg bg-white outline-none focus:border-ink resize-none text-sm leading-relaxed"
                 />
 
-                <div className="flex items-center gap-2 mt-3">
+                <div className="flex flex-col sm:flex-row gap-2 mt-3">
                   <button
                     onClick={() => gerarIA(lead)}
                     disabled={isAi}
-                    className="h-9 px-3 rounded border border-line text-sm hover:border-ink disabled:opacity-60"
-                    title="Gerar mensagem com IA"
+                    className="h-10 px-3 rounded-lg border border-line text-sm hover:border-ink disabled:opacity-60 order-2 sm:order-1"
                   >
                     {isAi ? "Gerando…" : "✨ Gerar com IA"}
                   </button>
                   <button
                     onClick={() => enviar(lead)}
-                    className="h-9 px-4 rounded bg-green-600 hover:bg-green-700 text-white text-sm font-medium ml-auto"
+                    className="flex-1 sm:flex-none sm:ml-auto h-10 px-5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium inline-flex items-center justify-center gap-2 order-1 sm:order-2"
                   >
-                    Enviar no WhatsApp
+                    <IconWhats /> {isSent ? "Enviar de novo" : "Enviar no WhatsApp"}
                   </button>
                 </div>
               </li>
@@ -303,7 +314,7 @@ function Chip({
   return (
     <button
       onClick={onClick}
-      className={`h-9 px-3 rounded-full text-sm border transition-colors ${
+      className={`shrink-0 h-9 px-3 rounded-full text-sm border transition-colors ${
         active
           ? accent
             ? "bg-brand text-white border-brand"
@@ -313,5 +324,13 @@ function Chip({
     >
       {children}
     </button>
+  );
+}
+
+function IconWhats() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2a10 10 0 0 0-8.5 15.2L2 22l4.9-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-1-.3-1.6-.6-2.9-1.3-4.8-4.2-4.9-4.4-.1-.2-1.2-1.5-1.2-2.9s.7-2 1-2.3c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.5.2.5.7 1.8.8 1.9.1.1.1.3 0 .5-.3.6-.6.8-.8 1-.2.2-.3.3-.1.6.2.3.9 1.4 1.9 2.3 1.3 1.1 2.3 1.4 2.6 1.6.3.1.4.1.6-.1.2-.2.7-.8.9-1.1.2-.3.4-.2.6-.1.2.1 1.5.7 1.7.9.2.1.4.2.4.3.1.1.1.6-.1 1.1Z" />
+    </svg>
   );
 }

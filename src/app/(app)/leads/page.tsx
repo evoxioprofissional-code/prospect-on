@@ -42,22 +42,22 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-10 max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto">
       <PageHeader
         eyebrow="Base de prospecção"
         title="Leads"
         subtitle={`${leads.length} negócio(s) na sua carteira.`}
         action={
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <button
               onClick={() => setDiscover(true)}
-              className="border border-ink text-ink hover:bg-ink hover:text-white font-medium h-11 px-4 rounded transition-colors"
+              className="flex-1 sm:flex-none border border-ink text-ink hover:bg-ink hover:text-white font-medium h-11 px-4 rounded transition-colors whitespace-nowrap"
             >
-              ⚡ Descobrir leads
+              ⚡ Descobrir
             </button>
             <button
               onClick={() => setEditing(null)}
-              className="bg-brand hover:bg-brand-600 text-white font-medium h-11 px-5 rounded"
+              className="flex-1 sm:flex-none bg-brand hover:bg-brand-600 text-white font-medium h-11 px-5 rounded whitespace-nowrap"
             >
               + Novo lead
             </button>

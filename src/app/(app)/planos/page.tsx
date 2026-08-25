@@ -37,7 +37,7 @@ export default function PlanosPage() {
   const pct = quota > 0 ? Math.min(100, Math.round((used / quota) * 100)) : 0;
 
   return (
-    <div className="p-6 lg:p-10 max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-10 max-w-6xl mx-auto">
       <PageHeader
         eyebrow="Assinatura"
         title="Planos"

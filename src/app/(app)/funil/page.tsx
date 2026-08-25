@@ -59,7 +59,7 @@ export default function FunilPage() {
   return (
     <div className="flex flex-col h-[calc(100dvh-3.5rem)] lg:h-[100dvh] overflow-hidden">
       {/* Cabeçalho fixo */}
-      <div className="px-6 lg:px-10 pt-6 lg:pt-8 shrink-0">
+      <div className="px-4 sm:px-6 lg:px-10 pt-4 sm:pt-6 lg:pt-8 shrink-0">
         <PageHeader
           eyebrow="Pipeline visual"
           title="Funil"
@@ -80,7 +80,7 @@ export default function FunilPage() {
       ) : (
         <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd}>
           {/* Área do quadro: ocupa o resto da tela, rola só na horizontal */}
-          <div className="flex-1 min-h-0 px-6 lg:px-10 pb-4">
+          <div className="flex-1 min-h-0 px-4 sm:px-6 lg:px-10 pb-4">
             <div className="h-full flex gap-4 overflow-x-auto pb-2">
               {STATUSES.map((s) => (
                 <Column
