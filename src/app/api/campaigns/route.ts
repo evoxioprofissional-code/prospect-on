@@ -191,29 +191,46 @@ export async function POST(req: Request) {
   });
 }
 
-// PATCH — pausar / retomar / cancelar uma campanha.
+// PATCH — pausar/retomar/cancelar e/ou editar (nome + ritmo/janela/limites).
 export async function PATCH(req: Request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Sessão expirada." }, { status: 401 });
 
-  let body: { id?: string; action?: "pause" | "resume" | "cancel" };
+  let body: {
+    id?: string;
+    action?: "pause" | "resume" | "cancel";
+    name?: string;
+    settings?: Partial<CampaignSettings>;
+  };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Corpo inválido." }, { status: 400 });
   }
   const { id, action } = body;
-  if (!id || !action) {
-    return NextResponse.json({ error: "id e action são obrigatórios." }, { status: 400 });
+  if (!id) {
+    return NextResponse.json({ error: "id é obrigatório." }, { status: 400 });
   }
 
-  const nextStatus =
-    action === "pause" ? "paused" : action === "resume" ? "running" : "canceled";
+  const patch: Record<string, unknown> = {};
+  if (action) {
+    patch.status =
+      action === "pause" ? "paused" : action === "resume" ? "running" : "canceled";
+  }
+  if (typeof body.name === "string" && body.name.trim()) {
+    patch.name = body.name.trim();
+  }
+  if (body.settings) {
+    Object.assign(patch, sanitizeSettings(body.settings));
+  }
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: "Nada para atualizar." }, { status: 400 });
+  }
 
   const supabase = createClient();
   const { error } = await supabase
     .from("prospect_campaigns")
-    .update({ status: nextStatus })
+    .update(patch)
     .eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ ok: true });

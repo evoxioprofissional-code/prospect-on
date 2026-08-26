@@ -582,6 +582,17 @@ function CampaignList({
 
 function CampaignRow({ c, onChange }: { c: Campaign; onChange: () => void }) {
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [ename, setEname] = useState(c.name);
+  const [es, setEs] = useState<CampaignSettings>({
+    min_delay_sec: c.min_delay_sec,
+    max_delay_sec: c.max_delay_sec,
+    daily_cap: c.daily_cap,
+    window_start_hour: c.window_start_hour,
+    window_end_hour: c.window_end_hour,
+    batch_size: c.batch_size,
+    batch_pause_min: c.batch_pause_min,
+  });
   const done = c.sent + c.failed;
   const pct = c.total ? Math.round((done / c.total) * 100) : 0;
   const pending = Math.max(0, c.total - done);
@@ -608,6 +619,17 @@ function CampaignRow({ c, onChange }: { c: Campaign; onChange: () => void }) {
     setBusy(true);
     await fetch(`/api/campaigns?id=${c.id}`, { method: "DELETE" });
     setBusy(false);
+    onChange();
+  }
+  async function saveEdit() {
+    setBusy(true);
+    await fetch("/api/campaigns", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: c.id, name: ename.trim() || c.name, settings: es }),
+    });
+    setBusy(false);
+    setEditing(false);
     onChange();
   }
 
@@ -653,11 +675,58 @@ function CampaignRow({ c, onChange }: { c: Campaign; onChange: () => void }) {
             Encerrar
           </button>
         )}
+        {(c.status === "running" || c.status === "paused") && (
+          <button onClick={() => setEditing((v) => !v)} disabled={busy}
+            className="h-9 px-3 rounded-lg border border-line text-sm hover:border-ink disabled:opacity-60">
+            {editing ? "Fechar" : "Editar"}
+          </button>
+        )}
         <button onClick={remove} disabled={busy}
           className="h-9 px-3 rounded-lg border border-line text-sm text-muted hover:text-brand hover:border-brand disabled:opacity-60 ml-auto">
           Apagar
         </button>
       </div>
+
+      {editing && (
+        <div className="mt-3 border-t border-line pt-3">
+          <label className="block mb-3">
+            <span className="eyebrow">Nome da campanha</span>
+            <input
+              value={ename}
+              onChange={(e) => setEname(e.target.value)}
+              className="mt-1 w-full h-10 px-3 border border-line rounded-lg bg-paper outline-none focus:border-ink"
+            />
+          </label>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Num label="Intervalo mínimo (s)" value={es.min_delay_sec}
+              onChange={(v) => setEs((s) => ({ ...s, min_delay_sec: v }))} />
+            <Num label="Intervalo máximo (s)" value={es.max_delay_sec}
+              onChange={(v) => setEs((s) => ({ ...s, max_delay_sec: v }))} />
+            <Num label="Limite por dia (0 = sem limite)" value={es.daily_cap}
+              onChange={(v) => setEs((s) => ({ ...s, daily_cap: v }))} />
+            <div className="grid grid-cols-2 gap-3">
+              <Num label="Hora início" value={es.window_start_hour}
+                onChange={(v) => setEs((s) => ({ ...s, window_start_hour: v }))} />
+              <Num label="Hora fim" value={es.window_end_hour}
+                onChange={(v) => setEs((s) => ({ ...s, window_end_hour: v }))} />
+            </div>
+            <Num label="Pausar a cada N envios (0 = nunca)" value={es.batch_size}
+              onChange={(v) => setEs((s) => ({ ...s, batch_size: v }))} />
+            <Num label="Duração da pausa (min)" value={es.batch_pause_min}
+              onChange={(v) => setEs((s) => ({ ...s, batch_pause_min: v }))} />
+          </div>
+          <div className="flex justify-end gap-2 mt-3">
+            <button onClick={() => setEditing(false)} disabled={busy}
+              className="h-9 px-4 rounded-lg border border-line text-sm disabled:opacity-60">
+              Cancelar
+            </button>
+            <button onClick={saveEdit} disabled={busy}
+              className="h-9 px-5 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand/90 disabled:opacity-60">
+              {busy ? "Salvando…" : "Salvar"}
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }
