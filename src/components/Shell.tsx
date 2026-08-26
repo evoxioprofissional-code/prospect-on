@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import UpgradeNudge from "@/components/UpgradeNudge";
 
 const NAV = [
   { href: "/dashboard", label: "Painel", icon: IconGrid },
@@ -112,6 +113,8 @@ export default function Shell({
 
         <main className="flex-1">{children}</main>
       </div>
+
+      <UpgradeNudge />
     </div>
   );
 }
