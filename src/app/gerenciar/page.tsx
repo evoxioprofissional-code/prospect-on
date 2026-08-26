@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { brl } from "@/lib/format";
 
-type PlanId = "trial" | "essencial" | "pro" | "agencia";
+type PlanId = "trial" | "starter" | "essencial" | "pro" | "agencia";
 
 interface Subscriber {
   email: string;
@@ -30,6 +30,7 @@ interface Overview {
 
 const PLAN_LABEL: Record<PlanId, string> = {
   trial: "Grátis",
+  starter: "Starter",
   essencial: "Essencial",
   pro: "Pro",
   agencia: "Agência",
@@ -37,6 +38,7 @@ const PLAN_LABEL: Record<PlanId, string> = {
 
 const PLAN_BADGE: Record<PlanId, string> = {
   trial: "bg-soft text-muted",
+  starter: "bg-emerald-100 text-emerald-700",
   essencial: "bg-blue-100 text-blue-700",
   pro: "bg-brand/15 text-brand",
   agencia: "bg-panel text-white",
@@ -176,7 +178,7 @@ export default function GerenciarPage() {
             className="h-10 px-3 border border-line rounded-lg bg-paper outline-none focus:border-ink text-sm w-full sm:w-56"
           />
           <div className="flex gap-1 overflow-x-auto">
-            {(["todos", "trial", "essencial", "pro", "agencia"] as const).map((p) => (
+            {(["todos", "trial", "starter", "essencial", "pro", "agencia"] as const).map((p) => (
               <button
                 key={p}
                 onClick={() => setPlanFilter(p)}

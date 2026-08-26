@@ -1,4 +1,4 @@
-export type PlanId = "trial" | "essencial" | "pro" | "agencia";
+export type PlanId = "trial" | "starter" | "essencial" | "pro" | "agencia";
 
 export interface Plan {
   id: PlanId;
@@ -26,6 +26,21 @@ export const PLANS: Record<PlanId, Plan> = {
     features: [
       "5 buscas no Google",
       "Funil, leads e disparo",
+    ],
+  },
+  starter: {
+    id: "starter",
+    name: "Starter",
+    price: 29,
+    searchQuota: 15,
+    leadCap: 200,
+    campaignCap: 25,
+    ai: false,
+    seats: 1,
+    features: [
+      "15 buscas Google/mês",
+      "Até 200 leads na base",
+      "25 disparos por campanha",
     ],
   },
   essencial: {
@@ -75,8 +90,20 @@ export const PLANS: Record<PlanId, Plan> = {
   },
 };
 
-export const PLAN_ORDER: PlanId[] = ["trial", "essencial", "pro", "agencia"];
+export const PLAN_ORDER: PlanId[] = [
+  "trial",
+  "starter",
+  "essencial",
+  "pro",
+  "agencia",
+];
 
 export function isPlanId(v: string): v is PlanId {
-  return v === "trial" || v === "essencial" || v === "pro" || v === "agencia";
+  return (
+    v === "trial" ||
+    v === "starter" ||
+    v === "essencial" ||
+    v === "pro" ||
+    v === "agencia"
+  );
 }

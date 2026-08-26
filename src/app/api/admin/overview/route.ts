@@ -134,6 +134,7 @@ export async function GET() {
   // KPIs de faturamento
   const planCounts: Record<PlanId, number> = {
     trial: 0,
+    starter: 0,
     essencial: 0,
     pro: 0,
     agencia: 0,
