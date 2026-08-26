@@ -25,7 +25,7 @@ export default function DiscoverModal({
   onClose: () => void;
   onImport: (leads: LeadInput[]) => Promise<{ count: number; error?: string }>;
 }) {
-  const [source, setSource] = useState<"osm" | "google">("osm");
+  const source = "google" as const;
   const [niche, setNiche] = useState("");
   const [city, setCity] = useState("");
   const [limit, setLimit] = useState(20);
@@ -130,12 +130,6 @@ export default function DiscoverModal({
         </div>
 
         <form onSubmit={search} className="p-6 space-y-4 border-b border-line">
-          {/* Fonte */}
-          <div className="flex gap-2">
-            <SourceTab active={source === "osm"} onClick={() => setSource("osm")} title="OpenStreetMap" sub="grátis" />
-            <SourceTab active={source === "google"} onClick={() => setSource("google")} title="Google Places" sub="precisa de chave" />
-          </div>
-
           <div className="grid sm:grid-cols-2 gap-4">
             <label className="block">
               <span className="eyebrow">Nicho</span>
@@ -165,7 +159,7 @@ export default function DiscoverModal({
               <input
                 type="number"
                 min={1}
-                max={200}
+                max={60}
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
                 className="mt-1 w-full h-11 px-3 border border-line rounded outline-none focus:border-ink tnum"
@@ -268,27 +262,3 @@ export default function DiscoverModal({
   );
 }
 
-function SourceTab({
-  active,
-  onClick,
-  title,
-  sub,
-}: {
-  active: boolean;
-  onClick: () => void;
-  title: string;
-  sub: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 rounded border px-4 py-3 text-left transition-colors ${
-        active ? "border-brand bg-brand/10" : "border-line hover:border-ink"
-      }`}
-    >
-      <div className="font-medium text-sm">{title}</div>
-      <div className="text-xs text-muted">{sub}</div>
-    </button>
-  );
-}

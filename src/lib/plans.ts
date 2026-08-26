@@ -16,12 +16,11 @@ export const PLANS: Record<PlanId, Plan> = {
     id: "trial",
     name: "Trial",
     price: 0,
-    searchQuota: 10,
+    searchQuota: 5,
     ai: false,
     seats: 1,
     features: [
-      "Descoberta OSM ilimitada",
-      "10 buscas no Google",
+      "5 buscas no Google",
       "Funil, leads e disparo",
     ],
   },
@@ -33,7 +32,6 @@ export const PLANS: Record<PlanId, Plan> = {
     ai: false,
     seats: 1,
     features: [
-      "Descoberta OSM ilimitada",
       "100 buscas Google/mês (~2.000 leads)",
       "Funil, disparo e histórico",
     ],
