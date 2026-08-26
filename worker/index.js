@@ -35,10 +35,21 @@ if (missing.length) {
   process.exit(1);
 }
 
+// fetch com timeout: nenhuma chamada externa (banco ou Evolution) pode ficar
+// pendurada pra sempre — isso congelava o processador da conta.
+function fetchWithTimeout(input, init = {}, ms = 20000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  const signal = init.signal ?? ctrl.signal;
+  return fetch(input, { ...init, signal }).finally(() => clearTimeout(t));
+}
+
 const supa = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
   // Node < 22 não tem WebSocket nativo; o supabase-js exige um. Passamos o "ws".
   realtime: { transport: ws },
+  // Timeout em toda chamada ao banco (evita travar o worker num request pendurado).
+  global: { fetch: (input, init) => fetchWithTimeout(input, init, 20000) },
 });
 
 const log = (...a) => console.log(new Date().toISOString(), "-", ...a);
@@ -53,20 +64,20 @@ const instanceFor = (teamId) => `prospect_${teamId}`;
 // ------------------------------------------------------------- evolution
 const EVO_TIMEOUT_MS = Number(process.env.EVO_TIMEOUT_MS || 30000);
 
-// fetch com timeout: se o Evolution/WhatsApp travar numa chamada, aborta em vez
-// de deixar o worker pendurado pra sempre (isso paralisava a campanha inteira).
+// Chamada ao Evolution com timeout (usa o fetchWithTimeout compartilhado).
 function evo(path, init) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), EVO_TIMEOUT_MS);
-  return fetch(`${EVOLUTION_URL}${path}`, {
-    ...init,
-    signal: ctrl.signal,
-    headers: {
-      apikey: EVOLUTION_KEY,
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
+  return fetchWithTimeout(
+    `${EVOLUTION_URL}${path}`,
+    {
+      ...init,
+      headers: {
+        apikey: EVOLUTION_KEY,
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
     },
-  }).finally(() => clearTimeout(t));
+    EVO_TIMEOUT_MS
+  );
 }
 
 async function connectionState(instance) {
@@ -276,6 +287,7 @@ async function handle({ campaign, message, today }, instance) {
 async function runTeam(teamId) {
   const instance = instanceFor(teamId);
   log(`processando conta ${teamId} (instância ${instance})`);
+  let waiting = false;
   try {
     for (;;) {
       const state = await connectionState(instance);
@@ -285,16 +297,23 @@ async function runTeam(teamId) {
       );
 
       if (state !== "open") {
-        // Número não está conectado: espera enquanto houver campanha ativa.
+        // Número não conectado: espera enquanto houver campanha ativa.
         if (!(await teamHasRunning(teamId))) break;
+        if (!waiting) {
+          log(`conta ${teamId}: WhatsApp "${state}", aguardando reconexão…`);
+          waiting = true;
+        }
         await sleep(POLL_MS);
         continue;
       }
+      waiting = false;
 
       const job = await nextJobForTeam(teamId);
       if (!job) break; // sem trabalho pendente → encerra o processador
       await handle(job, instance);
     }
+  } catch (e) {
+    log(`conta ${teamId}: processador caiu (${e.message}) — será recriado.`);
   } finally {
     runners.delete(teamId);
   }
