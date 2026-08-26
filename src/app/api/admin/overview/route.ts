@@ -26,6 +26,26 @@ function effectivePlan(sub: {
   return expired ? "trial" : plan;
 }
 
+// Busca todas as linhas de uma tabela (o PostgREST limita a 1000 por query).
+async function fetchAllRows(
+  admin: ReturnType<typeof createAdminClient>,
+  table: string,
+  columns: string
+): Promise<Record<string, unknown>[]> {
+  const size = 1000;
+  const rows: Record<string, unknown>[] = [];
+  for (let from = 0; ; from += size) {
+    const { data, error } = await admin
+      .from(table)
+      .select(columns)
+      .range(from, from + size - 1);
+    if (error || !data || data.length === 0) break;
+    rows.push(...(data as unknown as Record<string, unknown>[]));
+    if (data.length < size) break;
+  }
+  return rows;
+}
+
 export async function GET() {
   const supabase = createClient();
   const {
@@ -42,14 +62,48 @@ export async function GET() {
 
   const admin = createAdminClient();
 
-  const [subsRes, usersRes, leadsCountRes, campaignsRes, sessionsRes] =
-    await Promise.all([
-      admin.from("prospect_subscriptions").select("*"),
-      admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-      admin.from("leads").select("id", { count: "exact", head: true }),
-      admin.from("prospect_campaigns").select("sent,status"),
-      admin.from("prospect_wa_sessions").select("status,last_seen"),
-    ]);
+  const [subsRes, usersRes, sessionsRes] = await Promise.all([
+    admin.from("prospect_subscriptions").select("*"),
+    admin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    admin.from("prospect_wa_sessions").select("owner_id,status,last_seen"),
+  ]);
+
+  // Tabelas grandes: pagina (o PostgREST corta em 1000 linhas por query).
+  const leadRows = await fetchAllRows(admin, "leads", "team_id");
+  const campaignRows = await fetchAllRows(
+    admin,
+    "prospect_campaigns",
+    "team_id,sent,status"
+  );
+
+  // Agregações por time/dono.
+  const leadsByTeam = new Map<string, number>();
+  for (const r of leadRows) {
+    const t = r.team_id as string | null;
+    if (t) leadsByTeam.set(t, (leadsByTeam.get(t) ?? 0) + 1);
+  }
+
+  const activeByTeam = new Map<string, number>();
+  let messagesSent = 0;
+  for (const c of campaignRows) {
+    messagesSent += (c.sent as number) ?? 0;
+    if (c.status === "running") {
+      const t = c.team_id as string;
+      if (t) activeByTeam.set(t, (activeByTeam.get(t) ?? 0) + 1);
+    }
+  }
+
+  const sessions = sessionsRes.data ?? [];
+  const connectedOwners = new Set<string>();
+  for (const s of sessions) {
+    if (
+      s.status === "conectado" &&
+      s.last_seen &&
+      Date.now() - new Date(s.last_seen).getTime() < 180_000
+    ) {
+      connectedOwners.add(s.owner_id as string);
+    }
+  }
 
   const subs = subsRes.data ?? [];
   const users = usersRes.data?.users ?? [];
@@ -68,6 +122,9 @@ export async function GET() {
         provider: s?.provider ?? null,
         currentPeriodEnd: s?.current_period_end ?? null,
         searchesUsed: s?.searches_used ?? 0,
+        leads: leadsByTeam.get(u.id) ?? 0,
+        activeCampaigns: activeByTeam.get(u.id) ?? 0,
+        whatsappConnected: connectedOwners.has(u.id),
         createdAt: u.created_at ?? null,
         lastSignInAt: u.last_sign_in_at ?? null,
       };
@@ -100,17 +157,8 @@ export async function GET() {
       revenue: planCounts[p] * PLANS[p].price,
     }));
 
-  // Uso agregado
-  const campaigns = campaignsRes.data ?? [];
-  const messagesSent = campaigns.reduce((acc, c) => acc + (c.sent ?? 0), 0);
-  const activeCampaigns = campaigns.filter((c) => c.status === "running").length;
-  const sessions = sessionsRes.data ?? [];
-  const connectedNumbers = sessions.filter(
-    (s) =>
-      s.status === "conectado" &&
-      s.last_seen &&
-      Date.now() - new Date(s.last_seen).getTime() < 180_000
-  ).length;
+  let activeCampaigns = 0;
+  for (const v of activeByTeam.values()) activeCampaigns += v;
 
   return NextResponse.json({
     kpis: {
@@ -122,10 +170,10 @@ export async function GET() {
     planCounts,
     revenueByPlan,
     usage: {
-      leads: leadsCountRes.count ?? 0,
+      leads: leadRows.length,
       messagesSent,
       activeCampaigns,
-      connectedNumbers,
+      connectedNumbers: connectedOwners.size,
     },
     subscribers,
   });

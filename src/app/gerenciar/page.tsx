@@ -13,6 +13,9 @@ interface Subscriber {
   provider: string | null;
   currentPeriodEnd: string | null;
   searchesUsed: number;
+  leads: number;
+  activeCampaigns: number;
+  whatsappConnected: boolean;
   createdAt: string | null;
   lastSignInAt: string | null;
 }
@@ -195,6 +198,9 @@ export default function GerenciarPage() {
               <tr className="text-left text-xs uppercase tracking-wide text-muted border-b border-line">
                 <th className="px-4 py-2.5 font-medium">E-mail</th>
                 <th className="px-4 py-2.5 font-medium">Plano</th>
+                <th className="px-4 py-2.5 font-medium tnum">Leads</th>
+                <th className="px-4 py-2.5 font-medium tnum">Camp. ativas</th>
+                <th className="px-4 py-2.5 font-medium">WhatsApp</th>
                 <th className="px-4 py-2.5 font-medium">Origem</th>
                 <th className="px-4 py-2.5 font-medium">Validade</th>
                 <th className="px-4 py-2.5 font-medium tnum">Buscas</th>
@@ -212,6 +218,18 @@ export default function GerenciarPage() {
                       {PLAN_LABEL[s.plan]}
                     </span>
                   </td>
+                  <td className="px-4 py-2.5 tnum">{s.leads.toLocaleString("pt-BR")}</td>
+                  <td className="px-4 py-2.5 tnum text-muted">{s.activeCampaigns}</td>
+                  <td className="px-4 py-2.5">
+                    {s.whatsappConnected ? (
+                      <span className="inline-flex items-center gap-1.5 text-green-700">
+                        <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                        Conectado
+                      </span>
+                    ) : (
+                      <span className="text-muted">—</span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5 text-muted">{providerLabel(s.provider)}</td>
                   <td className="px-4 py-2.5 text-muted">{fmtDate(s.currentPeriodEnd)}</td>
                   <td className="px-4 py-2.5 tnum text-muted">{s.searchesUsed}</td>
@@ -220,7 +238,7 @@ export default function GerenciarPage() {
               ))}
               {subscribers.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-muted">
+                  <td colSpan={9} className="px-4 py-8 text-center text-muted">
                     Nenhuma conta nesse filtro.
                   </td>
                 </tr>
