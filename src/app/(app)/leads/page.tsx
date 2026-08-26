@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { useLeads } from "@/lib/useLeads";
+import { useSubscription } from "@/lib/useSubscription";
+import { PLANS } from "@/lib/plans";
 import { STATUSES, leadHeat, type Lead, type LeadInput, type LeadStatus } from "@/lib/types";
 import { brl, initials, whatsappLink } from "@/lib/format";
 import LeadModal from "@/components/LeadModal";
@@ -12,7 +14,15 @@ type Filter = "todos" | "sem_site" | LeadStatus;
 
 export default function LeadsPage() {
   const { leads, loading, create, createMany, update, remove } = useLeads();
+  const { sub } = useSubscription();
   const [q, setQ] = useState("");
+
+  // Teto de leads do plano (grátis = 15). Leads acima do teto já existentes
+  // ficam; só bloqueia adicionar novos além do limite.
+  const leadCap = sub ? PLANS[sub.plan].leadCap : Infinity;
+  const remaining = Math.max(0, leadCap - leads.length);
+  const atCap = remaining <= 0;
+  const capLabel = Number.isFinite(leadCap) ? `${leads.length}/${leadCap}` : null;
   const [filter, setFilter] = useState<Filter>("todos");
   const [editing, setEditing] = useState<Lead | null | undefined>(undefined);
   const [discover, setDiscover] = useState(false);
@@ -37,8 +47,33 @@ export default function LeadsPage() {
   }, [leads, q, filter]);
 
   async function handleSave(input: LeadInput, id?: string) {
-    if (id) await update(id, input);
-    else await create(input);
+    if (id) {
+      await update(id, input);
+      return;
+    }
+    if (atCap) return;
+    await create(input);
+  }
+
+  // Importação da descoberta respeitando o teto do plano.
+  async function handleImport(
+    newLeads: LeadInput[]
+  ): Promise<{ count: number; error?: string }> {
+    if (atCap) {
+      return {
+        count: 0,
+        error: `Seu plano permite até ${leadCap} leads. Faça upgrade para adicionar mais.`,
+      };
+    }
+    const toAdd = newLeads.slice(0, remaining);
+    const res = await createMany(toAdd);
+    if (!res.error && toAdd.length < newLeads.length) {
+      return {
+        count: res.count ?? 0,
+        error: `Importados ${res.count ?? 0}. Você atingiu o limite de ${leadCap} leads do plano — faça upgrade para adicionar mais.`,
+      };
+    }
+    return res;
   }
 
   return (
@@ -46,7 +81,11 @@ export default function LeadsPage() {
       <PageHeader
         eyebrow="Base de prospecção"
         title="Leads"
-        subtitle={`${leads.length} negócio(s) na sua carteira.`}
+        subtitle={
+          capLabel
+            ? `${capLabel} leads — limite do plano grátis.`
+            : `${leads.length} negócio(s) na sua carteira.`
+        }
         action={
           <div className="flex gap-2 w-full sm:w-auto">
             <button
@@ -60,13 +99,25 @@ export default function LeadsPage() {
             </button>
             <button
               onClick={() => setEditing(null)}
-              className="flex-1 sm:flex-none bg-brand hover:bg-brand-600 text-white font-medium h-11 px-5 rounded whitespace-nowrap"
+              disabled={atCap}
+              title={atCap ? `Limite de ${leadCap} leads do plano grátis atingido.` : undefined}
+              className="flex-1 sm:flex-none bg-brand hover:bg-brand-600 text-white font-medium h-11 px-5 rounded whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + Novo lead
             </button>
           </div>
         }
       />
+
+      {atCap && (
+        <div className="mb-4 rounded-lg border border-brand/30 bg-brand/10 px-4 py-3 text-sm">
+          Você atingiu o limite de {leadCap} leads do plano grátis.{" "}
+          <a href="/planos" className="text-brand font-medium hover:underline">
+            Fazer upgrade
+          </a>{" "}
+          para adicionar mais.
+        </div>
+      )}
 
       {/* Busca */}
       <div className="relative mb-4">
@@ -130,7 +181,7 @@ export default function LeadsPage() {
         <DiscoverModal
           existingNames={existingNames}
           onClose={() => setDiscover(false)}
-          onImport={createMany}
+          onImport={handleImport}
         />
       )}
     </div>

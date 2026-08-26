@@ -4,7 +4,8 @@ export interface Plan {
   id: PlanId;
   name: string;
   price: number; // R$/mês
-  searchQuota: number; // buscas Google por mês (OSM é ilimitado)
+  searchQuota: number; // buscas Google por mês
+  leadCap: number; // máximo de leads na carteira (Infinity = sem teto)
   ai: boolean; // IA no disparo
   seats: number;
   highlight?: boolean;
@@ -17,6 +18,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Trial",
     price: 0,
     searchQuota: 5,
+    leadCap: 15,
     ai: false,
     seats: 1,
     features: [
@@ -29,6 +31,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Essencial",
     price: 97,
     searchQuota: 100,
+    leadCap: Infinity,
     ai: false,
     seats: 1,
     features: [
@@ -41,6 +44,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Pro",
     price: 197,
     searchQuota: 300,
+    leadCap: Infinity,
     ai: true,
     seats: 1,
     highlight: true,
@@ -55,6 +59,7 @@ export const PLANS: Record<PlanId, Plan> = {
     name: "Agência",
     price: 397,
     searchQuota: 1000,
+    leadCap: Infinity,
     ai: true,
     seats: 3,
     features: [
