@@ -14,10 +14,7 @@ export async function POST(req: Request) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
     return NextResponse.json(
-      {
-        error:
-          "IA não configurada. Adicione ANTHROPIC_API_KEY no .env.local (e na Vercel) para gerar mensagens com IA.",
-      },
+      { error: "A geração com IA está indisponível no momento." },
       { status: 400 }
     );
   }
@@ -100,7 +97,10 @@ Situação: ${situacao}`;
     return NextResponse.json({ message: text });
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError) {
-      return NextResponse.json({ error: "Chave da Anthropic inválida." }, { status: 401 });
+      return NextResponse.json(
+        { error: "A geração com IA está indisponível no momento." },
+        { status: 401 }
+      );
     }
     if (e instanceof Anthropic.RateLimitError) {
       return NextResponse.json({ error: "Limite de uso atingido, tente em instantes." }, { status: 429 });
