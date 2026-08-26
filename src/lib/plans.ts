@@ -6,6 +6,7 @@ export interface Plan {
   price: number; // R$/mês
   searchQuota: number; // buscas Google por mês
   leadCap: number; // máximo de leads na carteira (Infinity = sem teto)
+  campaignCap: number; // máx. de mensagens por campanha (Infinity = sem teto)
   ai: boolean; // IA no disparo
   seats: number;
   highlight?: boolean;
@@ -19,6 +20,7 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 0,
     searchQuota: 5,
     leadCap: 15,
+    campaignCap: 10,
     ai: false,
     seats: 1,
     features: [
@@ -32,6 +34,7 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 97,
     searchQuota: 100,
     leadCap: Infinity,
+    campaignCap: Infinity,
     ai: false,
     seats: 1,
     features: [
@@ -45,6 +48,7 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 197,
     searchQuota: 300,
     leadCap: Infinity,
+    campaignCap: Infinity,
     ai: true,
     seats: 1,
     highlight: true,
@@ -60,6 +64,7 @@ export const PLANS: Record<PlanId, Plan> = {
     price: 397,
     searchQuota: 1000,
     leadCap: Infinity,
+    campaignCap: Infinity,
     ai: true,
     seats: 3,
     features: [

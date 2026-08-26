@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getSubState } from "@/lib/subscription-server";
+import { PLANS } from "@/lib/plans";
 import {
   DEFAULT_SETTINGS,
   type CampaignSettings,
@@ -122,6 +124,16 @@ export async function POST(req: Request) {
   const teamId = await resolveTeam(user.id);
   const settings = sanitizeSettings(body.settings);
 
+  // Teto de disparo por campanha conforme o plano (grátis = 10).
+  const sub = await getSubState(user.id);
+  const cap = PLANS[sub.plan].campaignCap;
+  let queued = messages;
+  let capped = false;
+  if (sub.enforced && Number.isFinite(cap) && messages.length > cap) {
+    queued = messages.slice(0, cap);
+    capped = true;
+  }
+
   const { data: campaign, error: campErr } = await supabase
     .from("prospect_campaigns")
     .insert({
@@ -131,7 +143,7 @@ export async function POST(req: Request) {
       empresa: (body.empresa ?? "").trim() || null,
       message_template: body.message_template ?? null,
       status: "running",
-      total: messages.length,
+      total: queued.length,
       ...settings,
     })
     .select("*")
@@ -144,7 +156,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  const rows = messages.map((m) => ({
+  const rows = queued.map((m) => ({
     campaign_id: campaign.id,
     user_id: user.id,
     team_id: teamId,
@@ -171,7 +183,12 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ campaign });
+  return NextResponse.json({
+    campaign,
+    note: capped
+      ? `O plano ${sub.plan} envia até ${cap} mensagens por campanha. Enfileiramos as primeiras ${queued.length}; faça upgrade para enviar para todos.`
+      : undefined,
+  });
 }
 
 // PATCH — pausar / retomar / cancelar uma campanha.

@@ -6,6 +6,8 @@ import { STATUSES, type Lead, type LeadStatus } from "@/lib/types";
 import { resolveTemplate } from "@/lib/templates";
 import { createClient } from "@/lib/supabase/client";
 import { useTemplates } from "@/lib/useTemplates";
+import { useSubscription } from "@/lib/useSubscription";
+import { PLANS } from "@/lib/plans";
 import TemplatesModal from "@/components/TemplatesModal";
 import {
   CAMPAIGN_STATUS_LABEL,
@@ -199,6 +201,8 @@ function NewCampaign({
     update: updateTemplate,
     remove: removeTemplate,
   } = useTemplates();
+  const { sub } = useSubscription();
+  const campaignCap = sub ? PLANS[sub.plan].campaignCap : Infinity;
   const [open, setOpen] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [name, setName] = useState("");
@@ -308,7 +312,10 @@ function NewCampaign({
       const data = await res.json();
       if (!res.ok) setError(data.error || "Falha ao criar campanha.");
       else {
-        setOkMsg(`Campanha criada com ${messages.length} contato(s) na fila.`);
+        const total = data.campaign?.total ?? messages.length;
+        setOkMsg(
+          data.note ?? `Campanha criada com ${total} contato(s) na fila.`
+        );
         setName("");
         setOpen(false);
         onCreated();
@@ -468,6 +475,16 @@ function NewCampaign({
           </span>
         )}
       </p>
+      {Number.isFinite(campaignCap) && fila.length > campaignCap && (
+        <p className="text-xs text-brand bg-brand/10 border border-brand/30 rounded-lg px-3 py-2 mt-2">
+          Seu plano envia até {campaignCap} por campanha — só as primeiras{" "}
+          {campaignCap} serão disparadas.{" "}
+          <a href="/planos" className="font-medium underline">
+            Fazer upgrade
+          </a>{" "}
+          para enviar a todos.
+        </p>
+      )}
 
       {/* Regras de envio */}
       <button
