@@ -8,10 +8,13 @@ import { SUPABASE_URL } from "@/lib/supabase/env";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Página inteira = mais tokens que uma mensagem. Opus dá o melhor visual;
-// para baratear, troque por "claude-haiku-4-5" (bem mais barato, um pouco
-// mais simples). max_tokens alto porque é um HTML completo.
-const MODEL = "claude-opus-5";
+// É só um index de demonstração pro cliente — usamos o modelo mais barato
+// (Haiku 4.5: US$1/US$5 por 1M tokens, ~5x mais barato que o Opus). Fica em
+// torno de R$0,15 por site. Se um dia quiser visual mais caprichado, troque
+// por "claude-opus-5" e volte a passar output_config.effort no create abaixo.
+// OBS: o Haiku 4.5 NÃO aceita output_config.effort (dá 400) — por isso ele
+// não aparece na chamada. max_tokens alto porque é um HTML completo.
+const MODEL = "claude-haiku-4-5";
 
 // Gate de plano: hoje o gerador de site segue o mesmo recurso de IA (Pro+).
 // Para liberar no Essencial, é só trocar a checagem `!sub.ai` abaixo.
@@ -111,7 +114,6 @@ Objetivo: impressionar o dono do negócio para ele contratar a criação do site
     const resp = await client.messages.create({
       model: MODEL,
       max_tokens: 8000,
-      output_config: { effort: "medium" },
       system,
       messages: [{ role: "user", content: userMsg }],
     });
