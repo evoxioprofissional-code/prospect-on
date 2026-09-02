@@ -8,6 +8,7 @@ import { STATUSES, leadHeat, type Lead, type LeadInput, type LeadStatus } from "
 import { brl, initials, whatsappLink } from "@/lib/format";
 import LeadModal from "@/components/LeadModal";
 import DiscoverModal from "@/components/DiscoverModal";
+import GenerateSiteModal from "@/components/GenerateSiteModal";
 import PageHeader from "@/components/PageHeader";
 
 type Filter = "todos" | "sem_site" | LeadStatus;
@@ -26,6 +27,7 @@ export default function LeadsPage() {
   const [filter, setFilter] = useState<Filter>("todos");
   const [editing, setEditing] = useState<Lead | null | undefined>(undefined);
   const [discover, setDiscover] = useState(false);
+  const [siteLead, setSiteLead] = useState<Lead | null>(null);
   // undefined = fechado, null = novo, Lead = editar
 
   const existingNames = useMemo(
@@ -162,7 +164,12 @@ export default function LeadsPage() {
           </p>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {filtered.map((l) => (
-              <LeadCard key={l.id} lead={l} onOpen={() => setEditing(l)} />
+              <LeadCard
+                key={l.id}
+                lead={l}
+                onOpen={() => setEditing(l)}
+                onGenerateSite={() => setSiteLead(l)}
+              />
             ))}
           </div>
         </>
@@ -184,11 +191,23 @@ export default function LeadsPage() {
           onImport={handleImport}
         />
       )}
+
+      {siteLead && (
+        <GenerateSiteModal lead={siteLead} onClose={() => setSiteLead(null)} />
+      )}
     </div>
   );
 }
 
-function LeadCard({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
+function LeadCard({
+  lead,
+  onOpen,
+  onGenerateSite,
+}: {
+  lead: Lead;
+  onOpen: () => void;
+  onGenerateSite: () => void;
+}) {
   const heat = leadHeat(lead);
   const contact = lead.whatsapp || lead.phone || lead.email;
   return (
@@ -236,18 +255,38 @@ function LeadCard({ lead, onOpen }: { lead: Lead; onOpen: () => void }) {
         <span className="tnum font-medium text-sm">{brl(lead.value)}</span>
       </div>
 
-      {/* Ação rápida */}
-      {lead.whatsapp && (
-        <a
-          href={whatsappLink(lead.whatsapp, `Olá! Falo com o ${lead.name}?`)}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="mt-3 inline-flex items-center justify-center gap-2 h-9 rounded border border-green-200 bg-green-50 text-green-700 text-sm hover:bg-green-100 transition-colors"
+      {/* Ações rápidas */}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onGenerateSite();
+          }}
+          className={`inline-flex items-center justify-center gap-1.5 h-9 rounded text-sm transition-colors ${
+            !lead.has_website
+              ? "bg-brand text-white hover:bg-brand-600"
+              : "border border-line text-ink hover:border-ink"
+          }`}
+          title="Gerar um site de demonstração com IA para apresentar ao cliente"
         >
-          <IconWhats /> WhatsApp
-        </a>
-      )}
+          ✨ Gerar site
+        </button>
+        {lead.whatsapp ? (
+          <a
+            href={whatsappLink(lead.whatsapp, `Olá! Falo com o ${lead.name}?`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center gap-2 h-9 rounded border border-green-200 bg-green-50 text-green-700 text-sm hover:bg-green-100 transition-colors"
+          >
+            <IconWhats /> WhatsApp
+          </a>
+        ) : (
+          <span className="inline-flex items-center justify-center h-9 rounded border border-dashed border-line text-xs text-muted">
+            sem WhatsApp
+          </span>
+        )}
+      </div>
     </div>
   );
 }
