@@ -8,13 +8,12 @@ import { SUPABASE_URL } from "@/lib/supabase/env";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// É só um index de demonstração pro cliente — usamos o modelo mais barato
-// (Haiku 4.5: US$1/US$5 por 1M tokens, ~5x mais barato que o Opus). Fica em
-// torno de R$0,15 por site. Se um dia quiser visual mais caprichado, troque
-// por "claude-opus-5" e volte a passar output_config.effort no create abaixo.
-// OBS: o Haiku 4.5 NÃO aceita output_config.effort (dá 400) — por isso ele
-// não aparece na chamada. max_tokens alto porque é um HTML completo.
-const MODEL = "claude-haiku-4-5";
+// O site é PEÇA DE VENDA (tem que impressionar o cliente), então priorizamos
+// qualidade com custo baixo: Sonnet 5 (US$2/US$10 por 1M) ≈ R$0,30 por site —
+// bem melhor que o Haiku em design e copy.
+//   • Mais barato possível: "claude-haiku-4-5" (~R$0,15, mais simples/"cara de IA").
+//   • Topo de qualidade:    "claude-opus-5"  (~R$1, o melhor visual).
+const MODEL = "claude-sonnet-5";
 
 // Gate de plano: hoje o gerador de site segue o mesmo recurso de IA (Pro+).
 // Para liberar no Essencial, é só trocar a checagem `!sub.ai` abaixo.
@@ -85,27 +84,39 @@ export async function POST(req: Request) {
   const waHref = wa ? `https://wa.me/${wa}` : "";
 
   const system =
-    "Você é um web designer brasileiro que cria landing pages de alta conversão para pequenos negócios. " +
-    "Gere UM único arquivo HTML COMPLETO e autossuficiente (um site institucional de uma página) em português do Brasil. " +
-    "REGRAS OBRIGATÓRIAS:\n" +
-    "- Responda SOMENTE com o código HTML, começando em <!DOCTYPE html>. Nada de explicação, nada de crases/markdown.\n" +
-    "- Tudo inline: <style> no <head>. Sem arquivos externos, exceto Google Fonts (link para fonts.googleapis.com é permitido).\n" +
-    "- Nada de imagens externas (sem URLs de fotos). Use gradientes, cores, ícones em SVG inline ou emojis como recurso visual.\n" +
-    "- Design moderno, bonito e responsivo (mobile-first): hero com título forte, seção de serviços, diferenciais, sobre, depoimentos genéricos (sem inventar nomes reais de pessoas), e um bloco de contato/CTA.\n" +
+    "Você é diretor de arte e copywriter sênior. Cria sites institucionais de UMA PÁGINA para pequenos negócios no Brasil, com aparência de trabalho profissional feito por humano — NUNCA cara de template de IA. Gere UM único arquivo HTML completo e autossuficiente, em português do Brasil.\n\n" +
+    "USE OS DADOS DO NEGÓCIO (obrigatório — o site é sob medida, não genérico):\n" +
+    "- O NOME do negócio aparece na marca do topo, no <title>, no hero e no rodapé.\n" +
+    "- TODO o texto é específico para o SEGMENTO e a CIDADE informados. Cite a cidade/região com naturalidade.\n" +
+    "- As seções e serviços são os TÍPICOS do segmento, escritos por quem conhece o ramo. Ex.: restaurante → pratos/cardápio/reservas; clínica → especialidades/agendamento; barbearia → cortes/barba/agenda; loja → produtos/entrega; academia → modalidades/planos. Adapte ao segmento recebido.\n\n" +
+    "PROIBIDO (é isso que dá 'cara de IA'):\n" +
+    "- ZERO emojis. Para ícones, use SVG inline simples (line icons), não emoji.\n" +
+    "- Nada de clichê genérico: 'bem-vindo ao nosso site', 'soluções inovadoras', 'transformando sonhos em realidade', 'excelência e qualidade', 'líder de mercado', 'o número 1', 'sua satisfação é nossa prioridade'.\n" +
+    "- NÃO invente fatos: sem endereço, CNPJ, telefone extra, preços exatos, ano de fundação, prêmios, números de clientes ou depoimentos com nomes reais. Depoimento (se houver) curto e claramente ilustrativo, sem nome de pessoa real.\n" +
+    "- Nada de lorem ipsum nem texto de preenchimento sem sentido.\n\n" +
+    "DESIGN (profissional, não 'arco-íris de IA'):\n" +
+    "- Paleta enxuta: 1 cor principal + neutros (fundo claro, texto escuro de leitura). Sem gradientes coloridos espalhados por tudo.\n" +
+    "- Boa tipografia via Google Fonts (uma fonte de título + uma de texto). Bastante espaçamento/white space.\n" +
+    "- Estrutura real: header fixo com o nome do negócio + navegação âncora; hero com headline ESPECÍFICA desse negócio (não genérica) + botão de contato; seção de serviços (3 a 6, específicos do segmento, cada um com título e 1-2 frases reais); uma seção sobre/diferenciais coerente; seção de contato/CTA; rodapé com o nome do negócio.\n" +
     "- Botão flutuante de WhatsApp fixo no canto inferior direito.\n" +
-    "- NÃO invente fatos específicos falsos: nada de endereço exato, CNPJ, preços fixos, prêmios ou avaliações com nomes reais. Copy persuasiva porém genérica e honesta (é uma demonstração).\n" +
-    "- Tom profissional e caloroso, adequado ao segmento.";
+    "- Responsivo, mobile-first.\n\n" +
+    "TÉCNICO:\n" +
+    "- Responda SOMENTE com o HTML, começando em <!DOCTYPE html>. Sem crases, sem markdown, sem explicação.\n" +
+    "- Todo o CSS inline em <style> no <head>. Sem JS externo. Sem imagens externas (use CSS/SVG/cores). Google Fonts é permitido.\n" +
+    "- No rodapé, de forma discreta, deixe claro que é uma prévia/demonstração.";
 
   const cta = waHref
-    ? `Todos os botões de contato/CTA e o botão flutuante devem apontar para: ${waHref} (abrir em nova aba).`
-    : `Não há número de WhatsApp; os botões de contato devem rolar para a seção de contato (âncora #contato).`;
+    ? `Todos os botões de contato/CTA e o botão flutuante do WhatsApp apontam para: ${waHref} (abrir em nova aba).`
+    : `Não há WhatsApp informado; os botões de contato rolam para a seção de contato (âncora #contato).`;
 
-  const userMsg = `Crie o site de demonstração para este negócio:
-Nome: ${name}
-Segmento: ${niche || "não informado"}
-Cidade/Região: ${city || "não informada"}
-${notes ? `Observações do vendedor: ${notes}\n` : ""}${cta}
-Objetivo: impressionar o dono do negócio para ele contratar a criação do site. Deixe claro (no rodapé, discreto) que é uma prévia/demonstração.`;
+  const userMsg = `Crie o site institucional de uma página deste negócio, com copy específica do segmento e da cidade:
+
+Negócio: ${name}
+Segmento: ${niche || "(não informado — deduza um segmento plausível pelo nome do negócio)"}
+Cidade/Região: ${city || "(não informada)"}
+${notes ? `Contexto do vendedor: ${notes}\n` : ""}${cta}
+
+Objetivo: impressionar o dono a ponto de ele querer contratar a criação do site. Capriche no visual e na coerência do texto — cada seção precisa fazer sentido para esse negócio específico.`;
 
   // Chaves "identity-linked" da Anthropic exigem informar o workspace via
   // header anthropic-workspace-id. Se ANTHROPIC_WORKSPACE_ID estiver setado,
@@ -122,7 +133,8 @@ Objetivo: impressionar o dono do negócio para ele contratar a criação do site
   try {
     const resp = await client.messages.create({
       model: MODEL,
-      max_tokens: 8000,
+      max_tokens: 16000,
+      thinking: { type: "disabled" }, // sem "pensamento" = custo previsível
       system,
       messages: [{ role: "user", content: userMsg }],
     });
