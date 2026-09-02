@@ -107,7 +107,16 @@ Cidade/Região: ${city || "não informada"}
 ${notes ? `Observações do vendedor: ${notes}\n` : ""}${cta}
 Objetivo: impressionar o dono do negócio para ele contratar a criação do site. Deixe claro (no rodapé, discreto) que é uma prévia/demonstração.`;
 
-  const client = new Anthropic({ apiKey: key });
+  // Chaves "identity-linked" da Anthropic exigem informar o workspace via
+  // header anthropic-workspace-id. Se ANTHROPIC_WORKSPACE_ID estiver setado,
+  // enviamos; senão, funciona normal com chaves comuns de workspace.
+  const workspaceId = (process.env.ANTHROPIC_WORKSPACE_ID || "").trim();
+  const client = new Anthropic({
+    apiKey: key,
+    ...(workspaceId
+      ? { defaultHeaders: { "anthropic-workspace-id": workspaceId } }
+      : {}),
+  });
 
   let html = "";
   try {
