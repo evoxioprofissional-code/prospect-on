@@ -21,8 +21,6 @@ export default function DisparoPage() {
   const [templateId, setTemplateId] = useState(DEFAULT_TEMPLATES[0].id);
   const [body, setBody] = useState(DEFAULT_TEMPLATES[0].body);
   const [overrides, setOverrides] = useState<Record<string, string>>({});
-  const [aiLoading, setAiLoading] = useState<Set<string>>(new Set());
-  const [aiError, setAiError] = useState<string | null>(null);
   const [sent, setSent] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<Filter>("novo");
 
@@ -70,33 +68,6 @@ export default function DisparoPage() {
 
   function messageFor(lead: Lead): string {
     return overrides[lead.id] ?? resolveTemplate(body, lead, empresa);
-  }
-
-  async function gerarIA(lead: Lead) {
-    setAiError(null);
-    setAiLoading((s) => new Set(s).add(lead.id));
-    try {
-      const res = await fetch("/api/generate-message", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: lead.name,
-          niche: lead.niche,
-          city: lead.city,
-          has_website: lead.has_website,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) setAiError(data.error || "Falha ao gerar.");
-      else setOverrides((o) => ({ ...o, [lead.id]: data.message }));
-    } catch {
-      setAiError("Erro de conexão com a IA.");
-    }
-    setAiLoading((s) => {
-      const n = new Set(s);
-      n.delete(lead.id);
-      return n;
-    });
   }
 
   async function enviar(lead: Lead) {
@@ -176,11 +147,6 @@ export default function DisparoPage() {
           ))}
           <span className="ml-1">preenchem sozinhos.</span>
         </div>
-        {aiError && (
-          <p className="text-sm text-brand bg-brand/10 border border-brand/30 rounded-lg px-3 py-2 mt-3">
-            {aiError}
-          </p>
-        )}
       </div>
 
       {/* Progresso */}
@@ -239,7 +205,6 @@ export default function DisparoPage() {
         <ul className="space-y-3">
           {fila.map((lead) => {
             const isSent = sent.has(lead.id);
-            const isAi = aiLoading.has(lead.id);
             return (
               <li
                 key={lead.id}
@@ -285,17 +250,10 @@ export default function DisparoPage() {
                   className="w-full px-3 py-2 border border-line rounded-lg bg-paper outline-none focus:border-ink resize-none text-sm leading-relaxed"
                 />
 
-                <div className="flex flex-col sm:flex-row gap-2 mt-3">
-                  <button
-                    onClick={() => gerarIA(lead)}
-                    disabled={isAi}
-                    className="h-10 px-3 rounded-lg border border-line text-sm hover:border-ink disabled:opacity-60 order-2 sm:order-1"
-                  >
-                    {isAi ? "Gerando…" : "Gerar com IA"}
-                  </button>
+                <div className="mt-3">
                   <button
                     onClick={() => enviar(lead)}
-                    className="flex-1 sm:flex-none sm:ml-auto h-10 px-5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium inline-flex items-center justify-center gap-2 order-1 sm:order-2"
+                    className="w-full h-10 px-5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium inline-flex items-center justify-center gap-2"
                   >
                     <IconWhats /> {isSent ? "Enviar de novo" : "Enviar no WhatsApp"}
                   </button>
